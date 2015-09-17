@@ -40,7 +40,7 @@ Make sure the bin, inc and lib paths to the corresponding ones.
 
 
 # (5) how to run
-./bin/trueke -l \<\L\> \<\R\> -t \<\T\> \<\dT\> -a \<\tri\> <\ins\> \<\pts\> \<\ms\> -h \<\h\> -s \<\pts\> \<\mz\> \<\eq\> \<\ms\> \<\meas\> \<\per\> -br \<\b\> \<\r\> -g \<\x\>
+./bin/trueke -l \<L\> \<R\> -t \<T\> \<dT\> -a \<tri\> <ins\> \<pts\> \<ms\> -h \<h\> -s \<pts\> \<mz\> \<eq\> \<ms\> \<meas\> \<per\> -br \<b\> \<r\> -g \<x\>
 
 
 
