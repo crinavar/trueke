@@ -46,13 +46,13 @@ Make sure the bin, inc and lib paths to the corresponding ones.
 
 
 # (6) parameters
-- <b>Lattice (-l)<\b>: size \<L\>, \<R\> replicas.
-- <b>Temperature (-t)<\b>: high-temp \<T\>, delta \<dT\>.
-- <b>Adaptive (-a)<\b>: \<tri\> trials, \<ins\> inserts/trial, \<pts\> exchange steps, \<ms\> sweeps per exchange.
-- <b>External Field (-h)<\b>: magnetic field strength \<h\> \(tipically, 0 \< h \< 3\).
-- <b>Simulation (-s)<\b>: \<pts\> ex, meas at \<mz\>, equil \<eq\> sweeps, \<ms\> sweeps/ex, \<per\> ex/\<meas\>
-- <b>Repetition (-br)<\b>: \<b\> blocks of \<ms\>, \<r\> disorder realizations.
-- <b>Multi-GPU (-g)<\b>: use \<x\> GPUs.
+- <b>Lattice (-l)</b>: size \<L\>, \<R\> replicas.
+- <b>Temperature (-t)</b>: high-temp \<T\>, delta \<dT\>.
+- <b>Adaptive (-a)</b>: \<tri\> trials, \<ins\> inserts/trial, \<pts\> exchange steps, \<ms\> sweeps per exchange.
+- <b>External Field (-h)</b>: magnetic field strength \<h\> \(tipically, 0 \< h \< 3\).
+- <b>Simulation (-s)</b>: \<pts\> ex, meas at \<mz\>, equil \<eq\> sweeps, \<ms\> sweeps/ex, \<per\> ex/\<meas\>
+- <b>Repetition (-br)</b>: \<b\> blocks of \<ms\>, \<r\> disorder realizations.
+- <b>Multi-GPU (-g)</b>: use \<x\> GPUs.
 
 
 
