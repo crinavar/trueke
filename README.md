@@ -46,13 +46,13 @@ Make sure the bin, inc and lib paths to the corresponding ones.
 
 
 # (6) parameters
-- l \<L\> \<R\>                                         -->   Size \<L\>, \<R\> replicas.
-- t \<T\> \<dT\>                                        -->   High-Temp \<T\>, delta \<dT\>.
-- a \<tri\> \<ins\> \<pts\> \<ms\>                      -->   Adaptive: \<tri\> trials, \<ins\> inserts/trial, \<pts\> exchange steps, \<ms\> sweeps per exchange.
-- h \<h\>                                               -->   External Field: magnetic field strength \<h\> (tipically, 0 < h < 3).
-- s \<pts\> \<mz\> \<eq\> \<ms\> \<meas\> \<per\>       -->   Simulation: \<pts\> ex, meas at \<mz\>, equil \<eq\> sweeps, \<ms\> sweeps/ex, \<per\> ex/\<meas\>
-- br \<b\> \<r\>                                        --->  Repetition: \<b\> blocks of \<ms\>, \<r\> disorder realizations.
-- g \<x\>                                               --->  Multi-GPU: use \<x\> GPUs.
+- -l \<L\> \<R\>                                         -->   Size \<L\>, \<R\> replicas.
+- -t \<T\> \<dT\>                                        -->   High-Temp \<T\>, delta \<dT\>.
+- -a \<tri\> \<ins\> \<pts\> \<ms\>                      -->   Adaptive: \<tri\> trials, \<ins\> inserts/trial, \<pts\> exchange steps, \<ms\> sweeps per exchange.
+- -h \<h\>                                               -->   External Field: magnetic field strength \<h\> \(tipically, 0 \< h \< 3\).
+- -s \<pts\> \<mz\> \<eq\> \<ms\> \<meas\> \<per\>       -->   Simulation: \<pts\> ex, meas at \<mz\>, equil \<eq\> sweeps, \<ms\> sweeps/ex, \<per\> ex/\<meas\>
+- -br \<b\> \<r\>                                        -->  Repetition: \<b\> blocks of \<ms\>, \<r\> disorder realizations.
+- -g \<x\>                                               -->  Multi-GPU: use \<x\> GPUs.
 
 
 
