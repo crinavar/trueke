@@ -51,10 +51,21 @@
 #include <omp.h>
 #include <nvml.h>
 
+// Error checking
+#define cudaCheckErrors(msg) \
+    do { \
+        cudaError_t __err = cudaGetLastError(); \
+        if (__err != cudaSuccess) { \
+            fprintf(stderr, "Fatal error: %s (%s at %s:%d)\n", \
+                msg, cudaGetErrorString(__err), __FILE__, __LINE__); \
+            fprintf(stderr, "*** FAILED - ABORTING\n"); \
+            exit(1); \
+        } \
+    } while(0)
+
 /* local includes */
 #include "structs.h"
 #include "heap.h"
-#include "../../../../reduction_lib/reduction.cuh"
 #include "kmetropolis.cuh"
 #include "kprng.cuh"
 #include "reduction.cuh"
