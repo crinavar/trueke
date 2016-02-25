@@ -1,5 +1,3 @@
-//////////////////////////////////////////////////////////////////////////////////
-//                                                                              //
 //  trueke                                                                      //
 //  A multi-GPU implementation of the exchange Monte Carlo method.              //
 //                                                                              //
@@ -80,7 +78,11 @@ __global__ void kernel_redenergy(int *s, int L, T *out, int *H, float h){
 	int z = blockIdx.z *blockDim.z + threadIdx.z;
 	int tid = threadIdx.z * BY * BX + threadIdx.y * BX + threadIdx.x;
 	int id = C(x,y,z,L);
-	float sum = -(float)(s[id] * ((float)(s[C((x+1) & (L-1), y, z, L)] + s[C(x, (y+1) & (L-1), z, L)] + s[C(x, y, (z+1) & (L-1), L)]) + h*H[id]));
+    // this optimization only works for L being a power of 2
+	//float sum = -(float)(s[id] * ((float)(s[C((x+1) & (L-1), y, z, L)] + s[C(x, (y+1) & (L-1), z, L)] + s[C(x, y, (z+1) & (L-1), L)]) + h*H[id]));
+
+    // this line works always
+	float sum = -(float)(s[id] * ((float)(s[C((x+1) >=  L? 0: x+1, y, z, L)] + s[C(x, (y+1) >= L? 0 : y+1, z, L)] + s[C(x, y, (z+1) >= L? 0 : z+1, L)]) + h*H[id]));
 	sum = block_reduce<T>(sum); 
 	if(tid == 0){
 		atomicAdd(out, sum);
