@@ -180,10 +180,11 @@ void reset_gpudata(setup_t *s, int tid, int a, int b){
 		//cudaCheckErrors("kernel: reset spins random");
 		/* doing a per-realizaton reset only works if seed is different each time */
 		if( s->nseed != s->seed ){
-			kernel_prng_setup<<<s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->dstates[k], s->N/4, s->nseed, (unsigned long long)(SEQOFFSET*tid + k));
+			kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->pcga[k], s->pcgb[k], s->N/4, s->nseed, (unsigned long long)(SEQOFFSET*tid + k));
 		}
 		cudaCheckErrors("kernel: prng reset");
 	}
+#pragma omp barrier
     if(tid == 0){
         if(s->nseed != s->seed){
             s->seed = s->nseed;
@@ -220,10 +221,11 @@ void adapt_reset_gpudata(setup_t *s, int tid){
 		/* doing a per-realizaton reset only works if seed is different each time */
 		if( s->nseed != s->seed ){
             //printf("setting new seed %i\n", s->nseed); fflush(stdout);
-			kernel_prng_setup<<<s->prng_grid, s->prng_block, 0, s->arstream[tid][k] >>>(s->adstates[tid][k], s->N/4, s->nseed, (unsigned long long)(SEQOFFSET*tid + k));
+			kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->arstream[tid][k] >>>(s->apcga[tid][k], s->apcgb[tid][k], s->N/4, s->nseed, (unsigned long long)(SEQOFFSET*tid + k));
 		}
 		cudaCheckErrors("kernel: prng reset");
 	}
+    #pragma omp barrier
     if(tid == 0 && s->nseed != s->seed){
         s->seed = s->nseed;
         printf("seed = %i\n", s->seed);
@@ -438,12 +440,12 @@ void simulation(setup_t *s, int tid, int a, int b){
 	for(int i = 0; i < s->fs; i++){
 		/* use replica order */
 		for(int k = a; k < b; ++k){
-			kernel_metropolis<<< s->mcgrid, s->mcblock, 0, s->rstream[k] >>>(s->N, s->L, s->dlat[k], s->dH[tid], s->h, -2.0f/s->T[s->trs[k]], s->dstates[k], 0);
+			kernel_metropolis<<< s->mcgrid, s->mcblock, 0, s->rstream[k] >>>(s->N, s->L, s->dlat[k], s->dH[tid], s->h, -2.0f/s->T[s->trs[k]], s->pcga[k], s->pcgb[k], 0);
 		}
 		cudaDeviceSynchronize();
 		cudaCheckErrors("simulation: kernel metropolis white launch");
 		for(int k = a; k < b; ++k){
-			kernel_metropolis<<< s->mcgrid, s->mcblock, 0, s->rstream[k] >>>(s->N, s->L, s->dlat[k], s->dH[tid], s->h, -2.0f/s->T[s->trs[k]], s->dstates[k], 1);
+			kernel_metropolis<<< s->mcgrid, s->mcblock, 0, s->rstream[k] >>>(s->N, s->L, s->dlat[k], s->dH[tid], s->h, -2.0f/s->T[s->trs[k]], s->pcga[k], s->pcgb[k], 1);
 		}
 		cudaDeviceSynchronize();
 		cudaCheckErrors("simulation: kernel metropolis black launch");
@@ -698,12 +700,14 @@ void equilibration(setup_t *s, int tid, int a, int b){
 		for(int i = 0; i < s->ds; i++){
 			/* replica order */
 			for(int k = a; k < b; ++k){
-				kernel_metropolis<<< s->mcgrid, s->mcblock, 0, s->rstream[k] >>>(s->N, s->L, s->dlat[k], s->dH[tid], s->h, -2.0f/s->T[s->trs[k]], s->dstates[k], 0);
+				//kernel_metropolis<<< s->mcgrid, s->mcblock, 0, s->rstream[k] >>>(s->N, s->L, s->dlat[k], s->dH[tid], s->h, -2.0f/s->T[s->trs[k]], s->dstates[k], 0);
+				kernel_metropolis<<< s->mcgrid, s->mcblock, 0, s->rstream[k] >>>(s->N, s->L, s->dlat[k], s->dH[tid], s->h, -2.0f/s->T[s->trs[k]], s->pcga[k], s->pcgb[k], 0);
 			}
 			cudaDeviceSynchronize();
 			cudaCheckErrors("equilibration: kernel metropolis white");
 			for(int k = a; k < b; ++k){
-				kernel_metropolis<<< s->mcgrid, s->mcblock, 0, s->rstream[k] >>>(s->N, s->L, s->dlat[k], s->dH[tid], s->h, -2.0f/s->T[s->trs[k]], s->dstates[k], 1);
+				//kernel_metropolis<<< s->mcgrid, s->mcblock, 0, s->rstream[k] >>>(s->N, s->L, s->dlat[k], s->dH[tid], s->h, -2.0f/s->T[s->trs[k]], s->dstates[k], 1);
+				kernel_metropolis<<< s->mcgrid, s->mcblock, 0, s->rstream[k] >>>(s->N, s->L, s->dlat[k], s->dH[tid], s->h, -2.0f/s->T[s->trs[k]], s->pcga[k], s->pcgb[k], 1);
 			}
 			cudaDeviceSynchronize();
 			cudaCheckErrors("equilibration: kernel metropolis black");
@@ -719,14 +723,14 @@ void metropolis(setup_t *s, int tid, int a, int b, int ms){
 		//printf("\n");
 		for(int k = a; k < b; ++k){
 			//printf("0 - simulating R%i --> T%i=%f\n", k, s->trs[k], s->T[s->trs[k]]);
-			kernel_metropolis<<< s->mcgrid, s->mcblock, 0, s->rstream[k] >>>(s->N, s->L, s->dlat[k], s->dH[tid], s->h, -2.0f/s->T[s->trs[k]], s->dstates[k], 0);
+			kernel_metropolis<<< s->mcgrid, s->mcblock, 0, s->rstream[k] >>>(s->N, s->L, s->dlat[k], s->dH[tid], s->h, -2.0f/s->T[s->trs[k]], s->pcga[k], s->pcgb[k], 0);
 		}
 		cudaDeviceSynchronize(); 
 		cudaCheckErrors("mcmc: kernel metropolis white launch");
 		//printf("\n");
 		for(int k = a; k < b; ++k){
 			//printf("1 - simulating R%i --> T%i=%f\n", k, s->trs[k], s->T[s->trs[k]]);
-			kernel_metropolis<<< s->mcgrid, s->mcblock, 0, s->rstream[k] >>>(s->N, s->L, s->dlat[k], s->dH[tid], s->h, -2.0f/s->T[s->trs[k]], s->dstates[k], 1);
+			kernel_metropolis<<< s->mcgrid, s->mcblock, 0, s->rstream[k] >>>(s->N, s->L, s->dlat[k], s->dH[tid], s->h, -2.0f/s->T[s->trs[k]], s->pcga[k], s->pcgb[k], 1);
 		}
 		cudaDeviceSynchronize(); 
 		cudaCheckErrors("mcmc: kernel metropolis black launch");
@@ -742,15 +746,14 @@ void adapt_metropolis(setup_t *s, int tid, int ms){
 		for(int k = 0; k < s->gpur[tid]; ++k){
             //printf("adapt_metro2 jejejej\n"); fflush(stdout);
 			//printf("0 - simulating R%i --> T%i=%f\n", k, s->trs[k], s->T[s->trs[k]]);
-			kernel_metropolis<<< s->mcgrid, s->mcblock, 0, s->arstream[tid][k] >>>
-            (s->N, s->L, s->mdlat[tid][k], s->dH[tid], s->h, -2.0f/s->aT[s->atrs[tid][k].f][s->atrs[tid][k].i], s->adstates[tid][k], 0);
+			kernel_metropolis<<< s->mcgrid, s->mcblock, 0, s->arstream[tid][k] >>>(s->N, s->L, s->mdlat[tid][k], s->dH[tid], s->h, -2.0f/s->aT[s->atrs[tid][k].f][s->atrs[tid][k].i], s->pcga[k], s->pcgb[k], 0);
 		}
         //printf("adapt_metro3 jejejej\n"); fflush(stdout);
 		cudaDeviceSynchronize();
 		cudaCheckErrors("mcmc: kernel metropolis white launch");
 		for(int k = 0; k < s->gpur[tid]; ++k){
 			//printf("1 - simulating R%i --> T%i=%f\n", k, s->trs[k], s->T[s->trs[k]]);
-			kernel_metropolis<<< s->mcgrid, s->mcblock, 0, s->arstream[tid][k] >>>(s->N, s->L, s->mdlat[tid][k], s->dH[tid], s->h, -2.0f/s->aT[s->atrs[tid][k].f][s->atrs[tid][k].i], s->adstates[tid][k], 1);
+			kernel_metropolis<<< s->mcgrid, s->mcblock, 0, s->arstream[tid][k] >>>(s->N, s->L, s->mdlat[tid][k], s->dH[tid], s->h, -2.0f/s->aT[s->atrs[tid][k].f][s->atrs[tid][k].i], s->pcga[k], s->pcgb[k], 1);
 		}
 		cudaDeviceSynchronize();
 		cudaCheckErrors("mcmc: kernel metropolis black launch");
@@ -808,7 +811,7 @@ void adapt_hdist(setup_t *s, int tid){
 	/* generate dist in multiple GPUs */
 	if( tid == 0 ){
 		/* we pass the first prng array from the corresponding GPU */
-		kernel_reset_random<<< s->lgrid, s->lblock>>>(s->dH[tid], s->N, s->adstates[tid][0]);	
+        kernel_reset_random_gpupcg<<< s->lgrid, s->lblock>>>(s->dH[tid], s->N, s->apcga[tid][0], s->apcgb[tid][0]);	
 		cudaCheckErrors("prng random distribution H");
 		checkCudaErrors(cudaMemcpy(s->hH, s->dH[tid], sizeof(int)*s->N, cudaMemcpyDeviceToHost));		
 		cudaCheckErrors("memcpy hdist dH -> hH");
@@ -834,7 +837,7 @@ void hdist(setup_t *s, int tid, int a, int b){
 	/* generate dist in multiple GPUs */
 	if( tid == 0 ){
 		/* we pass the first prng array from the corresponding GPU */
-		kernel_reset_random<<< s->lgrid, s->lblock>>>(s->dH[tid], s->N, s->dstates[a]);	
+        kernel_reset_random_gpupcg<<< s->lgrid, s->lblock>>>(s->dH[tid], s->N, s->pcga[a], s->pcgb[a]);	
 		cudaCheckErrors("prng random distribution H");
 		checkCudaErrors(cudaMemcpy(s->hH, s->dH[tid], sizeof(int)*s->N, cudaMemcpyDeviceToHost));		
 		cudaCheckErrors("memcpy hdist dH -> hH");

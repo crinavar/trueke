@@ -168,7 +168,8 @@ struct setup{
 	/* custom GPU struct with metadata */
 	gpu_t *gpus;
 	cudaStream_t *rstream, **arstream;
-	curandState **dstates, ***adstates;
+    uint64_t **pcga, ***apcga;
+    uint64_t **pcgb, ***apcgb;
 #ifdef MEASURE
 	const char *obsfolder;
 	const char *plotfolder;

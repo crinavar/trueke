@@ -100,7 +100,8 @@ void adapt_malloc_arrays( setup_t *s ){
 	s->aavex = (float**)malloc(sizeof(float*)*s->ngpus);
 	s->aexE = (float**)malloc(sizeof(float*)*s->ngpus);
 	s->arstream = (cudaStream_t**)malloc(sizeof(cudaStream_t*) * s->ngpus);
-	s->adstates = (curandState***)malloc(sizeof(curandState**) * s->ngpus);
+	s->apcga = (uint64_t***)malloc(sizeof(uint64_t**) * s->ngpus);
+	s->apcgb = (uint64_t***)malloc(sizeof(uint64_t**) * s->ngpus);
 	s->dH = (int **)malloc(sizeof(int*) * s->ngpus);
 	s->dE = (float**)malloc(sizeof(float*) * s->ngpus);
 	s->arts = (findex_t**)malloc(sizeof(findex_t*) * s->ngpus);
@@ -132,7 +133,8 @@ void adapt_malloc_arrays( setup_t *s ){
     	/* CUDA streams */
 		s->arstream[tid] = (cudaStream_t*)malloc(sizeof(cudaStream_t) * s->rpool[tid]);
 		/* PRNG states volume, one state per thread */
-		s->adstates[tid] = (curandState**)malloc(sizeof(curandState*) * s->rpool[tid]);
+		s->apcga[tid] = (uint64_t**)malloc(sizeof(uint64_t*) * s->rpool[tid]);
+		s->apcgb[tid] = (uint64_t**)malloc(sizeof(uint64_t*) * s->rpool[tid]);
 		/* fragmented indices for replicas temperature sorted */
 		s->arts[tid] = (findex_t*)malloc(sizeof(findex_t)*s->rpool[tid]);
 		/* fragmented indices for temperatures replica sorted */
@@ -146,9 +148,10 @@ void adapt_malloc_arrays( setup_t *s ){
 		/* malloc the data for 'r' replicas on each GPU */
 		for(int k = 0; k < s->rpool[tid]; ++k){
 			checkCudaErrors(cudaMalloc(&(s->mdlat[tid][k]), sizeof(int) * s->N));
-			checkCudaErrors(cudaMalloc(&(s->adstates[tid][k]), (s->N/4) * sizeof(curandState)));
+			checkCudaErrors(cudaMalloc(&(s->apcga[tid][k]), (s->N/4) * sizeof(uint64_t)));
+			checkCudaErrors(cudaMalloc(&(s->apcgb[tid][k]), (s->N/4) * sizeof(uint64_t)));
 			checkCudaErrors(cudaStreamCreateWithFlags(&(s->arstream[tid][k]), cudaStreamNonBlocking));
-			kernel_prng_setup<<<s->prng_grid, s->prng_block, 0, s->arstream[tid][k] >>>(s->adstates[tid][k], s->N/4, s->seed, (unsigned long long)(SEQOFFSET*tid + k));
+			kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->arstream[tid][k] >>>(s->apcga[tid][k], s->apcgb[tid][k], s->N/4, s->seed, (unsigned long long)(SEQOFFSET*tid + k));
 			cudaCheckErrors("kernel: prng reset");
 		}
 	}
@@ -272,7 +275,8 @@ void malloc_arrays( setup_t *s ){
 	/* CUDA streams */
 	s->rstream = (cudaStream_t*)malloc(sizeof(cudaStream_t) * s->R);
 	/* PRNG states volume, one state per thread */
-	s->dstates = (curandState**)malloc(sizeof(curandState*) * s->R);
+	s->pcga = (uint64_t **)malloc(sizeof(uint64_t *) * s->R);
+	s->pcgb = (uint64_t **)malloc(sizeof(uint64_t *) * s->R);
 	/* observables table */
 	s->obstable = (obset_t*)malloc(sizeof(obset_t)*s->R);
 	// memory for H array
@@ -298,9 +302,10 @@ void malloc_arrays( setup_t *s ){
 		for(int j = 0; j < r; ++j){
 			k = tid * r + j;
 			checkCudaErrors(cudaMalloc(&(s->dlat[k]), sizeof(int) * s->N));
-			checkCudaErrors(cudaMalloc(&(s->dstates[k]), (s->N/4) * sizeof(curandState)));
+			checkCudaErrors(cudaMalloc(&(s->pcga[k]), (s->N/4) * sizeof(uint64_t)));
+			checkCudaErrors(cudaMalloc(&(s->pcgb[k]), (s->N/4) * sizeof(uint64_t)));
 			checkCudaErrors(cudaStreamCreateWithFlags(&(s->rstream[k]), cudaStreamNonBlocking));
-			kernel_prng_setup<<<s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->dstates[k], s->N/4, s->seed, tid*SEQOFFSET + k);
+			kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->pcga[k], s->pcgb[k], s->N/4, s->seed, (unsigned long long)(SEQOFFSET*tid + k));
 			//cudaDeviceSynchronize();
 			cudaCheckErrors("kernel: prng reset");
 		}	

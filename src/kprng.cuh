@@ -36,4 +36,11 @@ __global__ void kernel_prng_setup(curandState *state, int N, unsigned long long 
 		//curand_init(seed, x, 0, &state[x]);
 	}
 }
+
+__global__ void kernel_gpupcg_setup(uint64_t *state, uint64_t *inc, int N, int seed, unsigned long long seq){
+	int x = blockIdx.x * blockDim.x + threadIdx.x;
+	if( x < N ){
+        gpu_pcg32_srandom_r(&(state[x]), &(inc[x]), x + seed, seq);
+	}
+}
 #endif

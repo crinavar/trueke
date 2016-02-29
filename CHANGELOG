@@ -1,9 +1,14 @@
+
+version 3.0:
+    - Fixed several bugs.
+    - CUDA PRNG has been dropped. Now trueke uses a custom GPU-version of Melissa Oneill's PCG which is very fasy and has good quality.
+
 version 2.9:
     - Fixed several bugs.
     - Code redesign for multi-GPU has been complete.
 
 version 2.8:
-    - new feature: adaptattive temperatures
+    - new feature: adaptative temperatures
     - the code is under a re-design process, aimed to work better in multi-GPU environments, both workstation and cluster.
     - fixed a bug where the random number generators were not unique among replicas.
     - minor improvements to the code

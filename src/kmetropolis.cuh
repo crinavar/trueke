@@ -54,7 +54,7 @@
 typedef int site_t;
 // kernel_metropolis
 __global__ void
-kernel_metropolis(int N, int L, site_t *s, int *H, float h, float B, curandState *dstates, int alt){
+kernel_metropolis(const int N, const int L, site_t *s, const int *H, const float h, const float B, uint64_t *state, uint64_t *inc, int alt){
 
 	// offsets
 	int offx = blockIdx.x * BX;
@@ -145,7 +145,8 @@ kernel_metropolis(int N, int L, site_t *s, int *H, float h, float B, curandState
 	}
 
 	// get random number state
-	curandState lstate= dstates[tid];
+	uint64_t lstate = state[tid];
+	uint64_t linc = inc[tid];
 	// the white and black y
   	int wy = ((sx + sz) & 1) 		+ 2*threadIdx.y;
   	int by = ((sx + sz + 1) & 1)	+ 2*threadIdx.y;
@@ -159,7 +160,7 @@ kernel_metropolis(int N, int L, site_t *s, int *H, float h, float B, curandState
 		/* -------- white update -------- */
 		dh = (float)(ss[sC(sx, wy, sz, sLx, sLy)] * (	(float)(ss[sC(sx-1,wy,sz, sLx, sLy)] + ss[sC(sx+1, wy, sz, sLx, sLy)]	+ ss[sC(sx,wy-1,sz, sLx, sLy)] + ss[sC(sx, wy+1, sz, sLx, sLy)]	+
 																ss[sC(sx,wy,sz-1, sLx, sLy)] + ss[sC(sx, wy, sz+1, sLx, sLy)])	+ h*h1));
-		c = signbit(dh-EPSILON) | signbit(curand_uniform(&lstate) - expf(dh * B));
+		c = signbit(dh-EPSILON) | signbit(gpu_rand01(&lstate, &linc) - expf(dh * B));
 		ss[sC(sx, wy, sz, sLx, sLy)] *= (1 - 2*c);
 		__syncthreads();
 
@@ -167,7 +168,7 @@ kernel_metropolis(int N, int L, site_t *s, int *H, float h, float B, curandState
 		dh = (float)(ss[sC(sx, by, sz, sLx, sLy)] * (	(float)(ss[sC(sx-1,by,sz, sLx, sLy)] + ss[sC(sx+1, by, sz, sLx, sLy)]	+ ss[sC(sx,by-1,sz, sLx, sLy)] + ss[sC(sx, by+1, sz, sLx, sLy)]	+
 																ss[sC(sx,by,sz-1, sLx, sLy)] + ss[sC(sx, by, sz+1, sLx, sLy)])	+ h*h2));
 
-		c = signbit(dh-EPSILON) | signbit(curand_uniform(&lstate) - expf(dh * B));
+		c = signbit(dh-EPSILON) | signbit(gpu_rand01(&lstate, &linc) - expf(dh * B));
 		ss[sC(sx, by, sz, sLx, sLy)] *= (1 - 2*c);
 		__syncthreads();
 	}
@@ -176,7 +177,8 @@ kernel_metropolis(int N, int L, site_t *s, int *H, float h, float B, curandState
 	s[C(x, y1, z, L)] = ss[sC(sx, sy1, sz, sLx, sLy)];
 	s[C(x, y2, z, L)] = ss[sC(sx, sy2, sz, sLx, sLy)]; 
 	/* update random number state */
-	dstates[tid] = lstate;
+    state[tid] = lstate;
+    inc[tid] = linc;
 }
 
 // kernel for random init
@@ -203,6 +205,35 @@ __global__ void kernel_reset_random(int *s, int N, curandState *state){
 	// fourth random
 	v = (int) (curand_uniform(&lstate) + 0.5f);
 	s[x + 3*N/4] = 1-2*(int)v;
+
+	/* save the state back to global memory */
+	state[x] = lstate;
+}
+
+// NOTE: the space of computation is 1/4 of N, so that is why each thread does quadruple work.
+__global__ void kernel_reset_random_gpupcg(int *s, int N, uint64_t *state, uint64_t *inc){
+	int x = blockIdx.x * blockDim.x + threadIdx.x;
+	float v;
+	/* Each thread gets same seed, a different sequence number, no offset */
+	if( x >= N/4 )
+		return;
+
+	/* get the prng state in register memory */
+	uint64_t lstate = state[x];
+	uint64_t linc = inc[x];
+
+	// first random
+	v = (int) (gpu_rand01(&lstate, &linc) + 0.5f);
+	s[x] = 1-2*v;
+	// second random
+	v = (int) (gpu_rand01(&lstate, &linc) + 0.5f);
+	s[x + N/4] = 1-2*v;
+	// third random
+	v = (int) (gpu_rand01(&lstate, &linc) + 0.5f);
+	s[x + N/2 ]	= 1-2*v;
+	// fourth random
+	v = (int) (gpu_rand01(&lstate, &linc) + 0.5f);
+	s[x + 3*N/4] = 1-2*v;
 
 	/* save the state back to global memory */
 	state[x] = lstate;
