@@ -745,15 +745,16 @@ void adapt_metropolis(setup_t *s, int tid, int ms){
 		/* replica order => use m to access temperature */
 		for(int k = 0; k < s->gpur[tid]; ++k){
             //printf("adapt_metro2 jejejej\n"); fflush(stdout);
-			//printf("0 - simulating R%i --> T%i=%f\n", k, s->trs[k], s->T[s->trs[k]]);
-			kernel_metropolis<<< s->mcgrid, s->mcblock, 0, s->arstream[tid][k] >>>(s->N, s->L, s->mdlat[tid][k], s->dH[tid], s->h, -2.0f/s->aT[s->atrs[tid][k].f][s->atrs[tid][k].i], s->pcga[k], s->pcgb[k], 0);
+			//printf("0 - simulating R%i --> T%i=%f\n", k, s->trs[k], s->T[s->trs[k]]); fflush(stdout);
+			//getchar();
+			kernel_metropolis<<< s->mcgrid, s->mcblock, 0, s->arstream[tid][k] >>>(s->N, s->L, s->mdlat[tid][k], s->dH[tid], s->h, -2.0f/s->aT[s->atrs[tid][k].f][s->atrs[tid][k].i], s->apcga[tid][k], s->apcgb[tid][k], 0);
 		}
         //printf("adapt_metro3 jejejej\n"); fflush(stdout);
 		cudaDeviceSynchronize();
 		cudaCheckErrors("mcmc: kernel metropolis white launch");
 		for(int k = 0; k < s->gpur[tid]; ++k){
 			//printf("1 - simulating R%i --> T%i=%f\n", k, s->trs[k], s->T[s->trs[k]]);
-			kernel_metropolis<<< s->mcgrid, s->mcblock, 0, s->arstream[tid][k] >>>(s->N, s->L, s->mdlat[tid][k], s->dH[tid], s->h, -2.0f/s->aT[s->atrs[tid][k].f][s->atrs[tid][k].i], s->pcga[k], s->pcgb[k], 1);
+			kernel_metropolis<<< s->mcgrid, s->mcblock, 0, s->arstream[tid][k] >>>(s->N, s->L, s->mdlat[tid][k], s->dH[tid], s->h, -2.0f/s->aT[s->atrs[tid][k].f][s->atrs[tid][k].i], s->apcga[tid][k], s->apcgb[tid][k], 1);
 		}
 		cudaDeviceSynchronize();
 		cudaCheckErrors("mcmc: kernel metropolis black launch");
