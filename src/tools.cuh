@@ -168,7 +168,7 @@ void adapt_threadset(setup_t *s, int *tid, int *nt, int *r){
 /* reset gpu data structures */
 void reset_gpudata(setup_t *s, int tid, int a, int b){
     if(tid == 0){
-        //s->nseed = time(NULL);
+        s->nseed = time(NULL);
     }
 #pragma omp barrier
 	for(int k = a; k < b; ++k){

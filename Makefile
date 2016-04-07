@@ -27,7 +27,7 @@ LIBS = -lcuda -L"$(CUDA_INSTALL_PATH)/lib64" -lcudart -L"$(CUDA_SDK_PATH)/common
 
 # compiler flags
 SPECIAL_FLAGS = --compiler-options -fno-strict-aliasing,-O3,-march=native,-msse4,-mfpmath=sse,-funroll-loops,-finline-functions -Xcompiler -fopenmp
-NVCCFLAGS	:= -m64 -arch sm_30 -lineinfo -O3 -Xptxas -dlcm=cg ${SPECIAL_FLAGS}
+NVCCFLAGS	:= -m64 -arch sm_30 -lineinfo -O3 -Xptxas -dlcm=cg ${SPECIAL_FLAGS} -D_FORCE_INLINES
 DEBUG_NVCCFLAGS := --ptxas-options=-v -G -g-ccbin /usr/bin/g++ -Xptxas -dlcm=cg
 
 # source files
