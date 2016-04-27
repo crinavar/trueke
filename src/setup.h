@@ -56,9 +56,9 @@ void adapt_init(setup_t *s, int argc, char **argv){
         /* random seeds */
         //s->seed = time(NULL);
         //s->nseed = s->seed + 7919;
-        //s->seed = s->nseed = (unsigned long long)time(NULL);
+        s->seed = s->nseed = (unsigned long long)time(NULL);
         /* constant seed useful for debugging */
-        s->seed = s->nseed = CSEED;
+        //s->seed = s->nseed = CSEED;
     }
 	srand(s->nseed);
 	/* pick the GPUs */
