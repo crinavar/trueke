@@ -167,9 +167,12 @@ void adapt_threadset(setup_t *s, int *tid, int *nt, int *r){
 
 /* reset gpu data structures */
 void reset_gpudata(setup_t *s, int tid, int a, int b){
+    // getting new need
+    /*
     if(tid == 0){
         s->nseed = time(NULL);
     }
+    */
 #pragma omp barrier
 	for(int k = a; k < b; ++k){
 		/* up spins */
@@ -185,6 +188,8 @@ void reset_gpudata(setup_t *s, int tid, int a, int b){
 		cudaCheckErrors("kernel: prng reset");
 	}
 #pragma omp barrier
+    // replacing the old seed
+    /*
     if(tid == 0){
         if(s->nseed != s->seed){
             s->seed = s->nseed;
@@ -194,6 +199,7 @@ void reset_gpudata(setup_t *s, int tid, int a, int b){
             printf("...............");
         }
     }
+    */
 #pragma omp barrier
 	cudaDeviceSynchronize();
 	cudaCheckErrors("kernel realization resets");
@@ -202,9 +208,11 @@ void reset_gpudata(setup_t *s, int tid, int a, int b){
 /* reset gpu data structures */
 void adapt_reset_gpudata(setup_t *s, int tid){
     //printf("adapt_reset\n");
+    /*
     if(tid == 0){
-        //s->nseed = time(NULL);
+        s->nseed = time(NULL);
     }
+    */
     #pragma omp barrier
 	for(int k = 0; k < s->gpur[tid]; ++k){
 		/* up spins */
@@ -226,10 +234,12 @@ void adapt_reset_gpudata(setup_t *s, int tid){
 		cudaCheckErrors("kernel: prng reset");
 	}
     #pragma omp barrier
+    /*
     if(tid == 0 && s->nseed != s->seed){
         s->seed = s->nseed;
         printf("seed = %i\n", s->seed);
     }
+    */
     #pragma omp barrier
 	cudaDeviceSynchronize();
 	cudaCheckErrors("kernel realization resets");

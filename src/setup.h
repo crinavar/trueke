@@ -51,12 +51,15 @@ void adapt_init(setup_t *s, int argc, char **argv){
         s->plotfolder = "plots";
         make_output_folders(s->obsfolder, s->plotfolder);
     #endif
-	/* random seeds */
-	//s->seed = time(NULL);
-	//s->nseed = s->seed + 7919;
-    /* constant seed useful for debugging */
-    //s->seed = s->nseed = 7919;
-    s->seed = s->nseed = (unsigned long long)time(NULL);
+    // if seed = 0, then the program chooses a seed
+    if(s->seed == 0){
+        /* random seeds */
+        //s->seed = time(NULL);
+        //s->nseed = s->seed + 7919;
+        //s->seed = s->nseed = (unsigned long long)time(NULL);
+        /* constant seed useful for debugging */
+        s->seed = s->nseed = CSEED;
+    }
 	srand(s->nseed);
 	/* pick the GPUs */
 	pickgpus(s);
@@ -462,8 +465,8 @@ void printparams(setup_t *s){
 /* get parameters */
 void getparams(setup_t *s, int argc, char **argv){
 	/* if the number or arguments is not correct, stop the program */
-	if(argc != 26){
-		printf("run as:\n./bin/trueke -l <L> <R> -t <T> <dT> -a <tri> <ins> <pts> <ms> -h <h> -s <pts> <mz> <eq> <ms> <meas> <per> -br <b> <r> -g <x>\n");
+	if(argc != 28){
+		printf("run as:\n./bin/trueke -l <L> <R> -t <T> <dT> -a <tri> <ins> <pts> <ms> -h <h> -s <pts> <mz> <eq> <ms> <meas> <per> -br <b> <r> -z <seed> -g <x>\n");
 		exit(1);
 	}
 	else{
@@ -506,6 +509,10 @@ void getparams(setup_t *s, int argc, char **argv){
 			/* number of gpus */
 			else if(strcmp(argv[i],"-g") == 0){
 				s->ngpus = atoi(argv[i+1]);
+			}
+			/* seed */
+			else if(strcmp(argv[i],"-z") == 0){
+				s->seed = s->nseed = atoi(argv[i+1]);
 			}
 		}
 	}

@@ -40,7 +40,7 @@ Make sure the bin, inc and lib paths to the corresponding ones.
 
 
 # (5) how to run
-./bin/trueke -l \<L\> \<R\> -t \<T\> \<dT\> -a \<tri\> <ins\> \<pts\> \<ms\> -h \<h\> -s \<pts\> \<mz\> \<eq\> \<ms\> \<meas\> \<per\> -br \<b\> \<r\> -g \<x\>
+./bin/trueke -l \<L\> \<R\> -t \<T\> \<dT\> -a \<tri\> <ins\> \<pts\> \<ms\> -h \<h\> -s \<pts\> \<mz\> \<eq\> \<ms\> \<meas\> \<per\> -br \<b\> \<r\> -z <seed> -g \<x\>
 
 
 
@@ -52,6 +52,7 @@ Make sure the bin, inc and lib paths to the corresponding ones.
 - <b>External Field (-h)</b>: magnetic field strength \<h\> \(tipically, 0 \< h \< 3\).
 - <b>Simulation (-s)</b>: \<pts\> ex, meas at \<mz\>, equil \<eq\> sweeps, \<ms\> sweeps/ex, \<per\> ex/\<meas\>
 - <b>Repetition (-br)</b>: \<b\> blocks of \<ms\>, \<r\> disorder realizations.
+- <b>Seed (-z)</b>: unsigned integer for seed. If zero is given, then the program chooses a seed.
 - <b>Multi-GPU (-g)</b>: use \<x\> GPUs.
 
 
