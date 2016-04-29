@@ -66,6 +66,17 @@ void fgoright(setup_t *s, findex_t *frag);
 void fshiftleft(setup_t *s, findex_t *frag);
 void fshiftright(setup_t *s, findex_t *frag);
 
+unsigned int devseed(){
+    int data;
+    FILE *fp;
+    fp = fopen("/dev/urandom", "r");
+    int bytes = fread(&data, sizeof(int), 1, fp);
+    fclose(fp);
+    //printf("seed = %u\n", data);
+    //getchar();
+    return data;
+}
+
 /* compare the utilization of two gpus */
 int compgpu(const void *a, const void *b){
 	return ( ((gpu*)a)->u - ((gpu*)b)->u );
@@ -168,12 +179,14 @@ void adapt_threadset(setup_t *s, int *tid, int *nt, int *r){
 /* reset gpu data structures */
 void reset_gpudata(setup_t *s, int tid, int a, int b){
     // getting new need
-    /*
     if(tid == 0){
-        s->nseed = time(NULL);
+        // choose a new seed
+        //s->seed = devseed();
+        // or increment the old seed
+        s->seed += (SEQOFFSET * s->N * s->ngpus);
+        printf("resets,[seed = %u]....."); fflush(stdout);
     }
-    */
-#pragma omp barrier
+    #pragma omp barrier
 	for(int k = a; k < b; ++k){
 		/* up spins */
 		kernel_reset<int><<< s->lgrid, s->lblock, 0, s->rstream[k] >>>(s->dlat[k], s->N, 1);
@@ -182,25 +195,13 @@ void reset_gpudata(setup_t *s, int tid, int a, int b){
 		//kernel_reset_random<<< s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->dlat[k], s->N, s->dstates[k]);
 		//cudaCheckErrors("kernel: reset spins random");
 		/* doing a per-realizaton reset only works if seed is different each time */
-		if( s->nseed != s->seed ){
-			kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->pcga[k], s->pcgb[k], s->N/4, s->nseed, (unsigned long long)(SEQOFFSET*tid + k));
-		}
+		kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->pcga[k], s->pcgb[k], s->N/4, s->seed, (unsigned long long)(SEQOFFSET*tid + k));
 		cudaCheckErrors("kernel: prng reset");
 	}
-#pragma omp barrier
-    // replacing the old seed
-    /*
     if(tid == 0){
-        if(s->nseed != s->seed){
-            s->seed = s->nseed;
-            printf("[%12i].", s->seed);
-        }
-        else{
-            printf("...............");
-        }
+        printf("ok\n");
     }
-    */
-#pragma omp barrier
+    #pragma omp barrier
 	cudaDeviceSynchronize();
 	cudaCheckErrors("kernel realization resets");
 }
@@ -208,11 +209,9 @@ void reset_gpudata(setup_t *s, int tid, int a, int b){
 /* reset gpu data structures */
 void adapt_reset_gpudata(setup_t *s, int tid){
     //printf("adapt_reset\n");
-    /*
     if(tid == 0){
-        s->nseed = time(NULL);
+        s->seed = devseed();
     }
-    */
     #pragma omp barrier
 	for(int k = 0; k < s->gpur[tid]; ++k){
 		/* up spins */
@@ -227,19 +226,9 @@ void adapt_reset_gpudata(setup_t *s, int tid){
 		//kernel_reset_random<<< s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->dlat[k], s->N, s->dstates[k]);
 		//cudaCheckErrors("kernel: reset spins random");
 		/* doing a per-realizaton reset only works if seed is different each time */
-		if( s->nseed != s->seed ){
-            //printf("setting new seed %i\n", s->nseed); fflush(stdout);
-			kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->arstream[tid][k] >>>(s->apcga[tid][k], s->apcgb[tid][k], s->N/4, s->nseed, (unsigned long long)(SEQOFFSET*tid + k));
-		}
+		kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->arstream[tid][k] >>>(s->apcga[tid][k], s->apcgb[tid][k], s->N/4, s->seed, (unsigned long long)(SEQOFFSET*tid + k));
 		cudaCheckErrors("kernel: prng reset");
 	}
-    #pragma omp barrier
-    /*
-    if(tid == 0 && s->nseed != s->seed){
-        s->seed = s->nseed;
-        printf("seed = %i\n", s->seed);
-    }
-    */
     #pragma omp barrier
 	cudaDeviceSynchronize();
 	cudaCheckErrors("kernel realization resets");
