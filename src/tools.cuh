@@ -184,7 +184,7 @@ void reset_gpudata(setup_t *s, int tid, int a, int b){
         //s->seed = devseed();
         // or increment the old seed
         s->seed += (SEQOFFSET * s->N * s->ngpus);
-        printf("resets,[seed = %u]....."); fflush(stdout);
+        printf("resets,[seed = %u].....", s->seed); fflush(stdout);
     }
     #pragma omp barrier
 	for(int k = a; k < b; ++k){
