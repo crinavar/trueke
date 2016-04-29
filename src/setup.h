@@ -148,7 +148,7 @@ void adapt_malloc_arrays( setup_t *s ){
 			checkCudaErrors(cudaMalloc(&(s->apcga[tid][k]), (s->N/4) * sizeof(uint64_t)));
 			checkCudaErrors(cudaMalloc(&(s->apcgb[tid][k]), (s->N/4) * sizeof(uint64_t)));
 			checkCudaErrors(cudaStreamCreateWithFlags(&(s->arstream[tid][k]), cudaStreamNonBlocking));
-			kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->arstream[tid][k] >>>(s->apcga[tid][k], s->apcgb[tid][k], s->N/4, s->seed, (unsigned long long)(SEQOFFSET*tid + k));
+			kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->arstream[tid][k] >>>(s->apcga[tid][k], s->apcgb[tid][k], s->N/4, s->seed, (unsigned long long)(s->R/s->ngpus*tid + k));
 			cudaCheckErrors("kernel: prng reset");
 		}
 	}
@@ -305,7 +305,7 @@ void malloc_arrays( setup_t *s ){
 			checkCudaErrors(cudaMalloc(&(s->pcga[k]), (s->N/4) * sizeof(uint64_t)));
 			checkCudaErrors(cudaMalloc(&(s->pcgb[k]), (s->N/4) * sizeof(uint64_t)));
 			checkCudaErrors(cudaStreamCreateWithFlags(&(s->rstream[k]), cudaStreamNonBlocking));
-			kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->pcga[k], s->pcgb[k], s->N/4, s->seed, (unsigned long long)(SEQOFFSET*tid + k));
+			kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->pcga[k], s->pcgb[k], s->N/4, s->seed, (unsigned long long)((s->R/s->ngpus)*tid + k));
 			//cudaDeviceSynchronize();
 			cudaCheckErrors("kernel: prng reset");
 		}	
@@ -449,7 +449,7 @@ void printparams(setup_t *s){
 	printf("\t\tperiod:                       %i\n", s->period);
 	printf("\t\tnblocks:                      %i\n", s->blocks);
 	printf("\t\trealizations:                 %i\n", s->realizations);
-	printf("\t\tseed:                         %i\n", s->seed);
+	printf("\t\tseed:                         %lu\n", s->seed);
 	printf("\t\tmicrosteps:                   %i\n", s->cs);
 	printf("\t\tNGPUS:                        %i\n\t}\n", s->ngpus);
 

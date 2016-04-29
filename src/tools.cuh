@@ -120,10 +120,6 @@ void reset_array(T *a, int n, T val){
 	
 /* per realization reset */
 void reset(setup_t *s, int tid, int a, int b){
-	if(tid  == 0){
-		printf("resets"); fflush(stdout);
-	}
-
 #ifdef MEASURE
 	/* reset block statistics */
 	reset_block_statistics( s, tid, a, b);
@@ -141,10 +137,6 @@ void reset(setup_t *s, int tid, int a, int b){
 	for(int i = a; i < b; ++i){
 		s->rts[i] = s->trs[i] = i;
 		s->avex[i] = 0.0;
-	}
-
-	if(tid  == 0){
-		printf("ok\n"); fflush(stdout);
 	}
 }
 
@@ -183,8 +175,8 @@ void reset_gpudata(setup_t *s, int tid, int a, int b){
         // choose a new seed
         //s->seed = devseed();
         // or increment the old seed
-        s->seed += (SEQOFFSET * s->N * s->ngpus);
-        printf("resets,[seed = %u].....", s->seed); fflush(stdout);
+        s->seed += (s->R * s->N);
+        printf("seed = %u\n", s->seed); fflush(stdout);
     }
     #pragma omp barrier
 	for(int k = a; k < b; ++k){
@@ -195,12 +187,9 @@ void reset_gpudata(setup_t *s, int tid, int a, int b){
 		//kernel_reset_random<<< s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->dlat[k], s->N, s->dstates[k]);
 		//cudaCheckErrors("kernel: reset spins random");
 		/* doing a per-realizaton reset only works if seed is different each time */
-		kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->pcga[k], s->pcgb[k], s->N/4, s->seed, (unsigned long long)(SEQOFFSET*tid + k));
+		kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->pcga[k], s->pcgb[k], s->N/4, s->seed, (unsigned long long)(s->R/s->ngpus*tid + k));
 		cudaCheckErrors("kernel: prng reset");
 	}
-    if(tid == 0){
-        printf("ok\n");
-    }
     #pragma omp barrier
 	cudaDeviceSynchronize();
 	cudaCheckErrors("kernel realization resets");
@@ -226,7 +215,7 @@ void adapt_reset_gpudata(setup_t *s, int tid){
 		//kernel_reset_random<<< s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->dlat[k], s->N, s->dstates[k]);
 		//cudaCheckErrors("kernel: reset spins random");
 		/* doing a per-realizaton reset only works if seed is different each time */
-		kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->arstream[tid][k] >>>(s->apcga[tid][k], s->apcgb[tid][k], s->N/4, s->seed, (unsigned long long)(SEQOFFSET*tid + k));
+		kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->arstream[tid][k] >>>(s->apcga[tid][k], s->apcgb[tid][k], s->N/4, s->seed, (unsigned long long)((s->R/s->ngpus)*tid + k));
 		cudaCheckErrors("kernel: prng reset");
 	}
     #pragma omp barrier

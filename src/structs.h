@@ -48,9 +48,6 @@ const char *filenames[] = {"energy.dat", "magnetization.dat", "sqenergy.dat", "s
 #define ZSQE_POS		11
 #define ZSQM_POS		12
 
-#define SEQOFFSET       1000
-#define CSEED           7919 /* constant seed */
-
 /* forward struct declarations */
 struct realization_data;
 struct block_data;
