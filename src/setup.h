@@ -207,7 +207,7 @@ void init(setup_t *s, int argc, char **argv){
 	//omp_set_num_threads(s->ngpus);
 	/* build the space of computation for the lattices */
     s->seed = devseed();
-    srand(seed);
+    srand(s->seed);
 
 	s->mcblock = dim3(BX, BY/2, BZ);
 	s->mcgrid = dim3((s->L + BX - 1)/BX, (s->L + BY - 1)/(2*BY),  (s->L + BZ - 1)/BZ);
