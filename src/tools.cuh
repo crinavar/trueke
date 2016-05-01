@@ -174,9 +174,9 @@ void reset_gpudata(setup_t *s, int tid, int a, int b){
     if(tid == 0){
         // choose a new seed
         //s->seed = devseed();
-        // or increment the old seed
-        s->seed += (s->R * s->N);
-        printf("seed = %u\n", s->seed); fflush(stdout);
+        // or increment the old seed by the number of spins
+        s->seed += s->N;
+        printf("seed = %lu\n", s->seed); fflush(stdout);
     }
     #pragma omp barrier
 	for(int k = a; k < b; ++k){
