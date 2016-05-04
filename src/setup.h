@@ -148,7 +148,7 @@ void adapt_malloc_arrays( setup_t *s ){
 			checkCudaErrors(cudaMalloc(&(s->apcga[tid][k]), (s->N/4) * sizeof(uint64_t)));
 			checkCudaErrors(cudaMalloc(&(s->apcgb[tid][k]), (s->N/4) * sizeof(uint64_t)));
 			checkCudaErrors(cudaStreamCreateWithFlags(&(s->arstream[tid][k]), cudaStreamNonBlocking));
-			kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->arstream[tid][k] >>>(s->apcga[tid][k], s->apcgb[tid][k], s->N/4, s->seed, (unsigned long long)(s->R/s->ngpus*tid + k));
+			kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->arstream[tid][k] >>>(s->apcga[tid][k], s->apcgb[tid][k], s->N/4, s->seed, (unsigned long long)(s->N/4 * (s->R/s->ngpus*tid + k)));
 			cudaCheckErrors("kernel: prng reset");
 		}
 	}
