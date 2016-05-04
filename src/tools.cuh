@@ -176,7 +176,7 @@ void reset_gpudata(setup_t *s, int tid, int a, int b){
         //s->seed = devseed();
         // or increment the old seed by the number of spins
         //s->seed += s->N;
-        printf("seed = %lu\n", s->seed); fflush(stdout);
+        //printf("seed = %lu\n", s->seed); fflush(stdout);
     }
     #pragma omp barrier
 	for(int k = a; k < b; ++k){
@@ -187,7 +187,7 @@ void reset_gpudata(setup_t *s, int tid, int a, int b){
 		//kernel_reset_random<<< s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->dlat[k], s->N, s->dstates[k]);
 		//cudaCheckErrors("kernel: reset spins random");
 		/* doing a per-realizaton reset only works if seed is different each time */
-		kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->pcga[k], s->pcgb[k], s->N/4, s->seed, (unsigned long long)(s->R/s->ngpus*tid + k));
+		//kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->pcga[k], s->pcgb[k], s->N/4, s->seed, (unsigned long long)(s->R/s->ngpus*tid + k));
 		cudaCheckErrors("kernel: prng reset");
 	}
     #pragma omp barrier
@@ -199,7 +199,7 @@ void reset_gpudata(setup_t *s, int tid, int a, int b){
 void adapt_reset_gpudata(setup_t *s, int tid){
     //printf("adapt_reset\n");
     if(tid == 0){
-        s->seed = devseed();
+        //s->seed = devseed();
     }
     #pragma omp barrier
 	for(int k = 0; k < s->gpur[tid]; ++k){
@@ -215,7 +215,7 @@ void adapt_reset_gpudata(setup_t *s, int tid){
 		//kernel_reset_random<<< s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->dlat[k], s->N, s->dstates[k]);
 		//cudaCheckErrors("kernel: reset spins random");
 		/* doing a per-realizaton reset only works if seed is different each time */
-		kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->arstream[tid][k] >>>(s->apcga[tid][k], s->apcgb[tid][k], s->N/4, s->seed, (unsigned long long)((s->R/s->ngpus)*tid + k));
+		//kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->arstream[tid][k] >>>(s->apcga[tid][k], s->apcgb[tid][k], s->N/4, s->seed, (unsigned long long)((s->R/s->ngpus)*tid + k));
 		cudaCheckErrors("kernel: prng reset");
 	}
     #pragma omp barrier
