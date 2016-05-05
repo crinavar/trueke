@@ -41,13 +41,32 @@ __global__ void kernel_gpupcg_setup(uint64_t *state, uint64_t *inc, int N, int s
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	if( x < N ){
         // exclusive seeds common seq
-        gpu_pcg32_srandom_r(&state[x], &inc[x], x + seed + seq, 1);
+        //gpu_pcg32_srandom_r(&state[x], &inc[x], x + seed + seq, 1);
 
         // vary seeds accross lattice positions
         //gpu_pcg32_srandom_r(&(state[x]), &(inc[x]), x + seed, seq);
 
         // one unique sequence for each thread in the multi-GPU system
         //gpu_pcg32_srandom_r(&(state[x]), &(inc[x]), seed, seq + x);
+
+	}
+}
+__global__ void kernel_gpupcg_setup_offset(uint64_t *state, uint64_t *inc, int N, int seed, unsigned long long seq, unsigned long long offset){
+	int x = blockIdx.x * blockDim.x + threadIdx.x;
+	if( x < N ){
+        // exclusive seeds common seq
+        //gpu_pcg32_srandom_r(&state[x], &inc[x], x + seed + seq, 1);
+
+        // vary seeds accross lattice positions
+        //gpu_pcg32_srandom_r(&(state[x]), &(inc[x]), x + seed, seq);
+
+        // one unique sequence for each thread in the multi-GPU system
+        //gpu_pcg32_srandom_r(&(state[x]), &(inc[x]), seed, seq + x);
+
+        // skip-ahead approach
+        gpu_pcg32_srandom_r(&state[x], &inc[x], seed, 1);
+        pcg_skip_ahead(&state[x], &inc[x], seq*(offset+x));
+
 	}
 }
 #endif
