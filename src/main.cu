@@ -83,27 +83,19 @@ int main(int argc, char **argv){
 	printf("\n**************** trueke : multi-GPU Parallel Tempering for 3D Random Field Ising Model****************\n\n");
 	/* setup handles the variables */
 	setup_t s;
-
-	/* find good temperature distribution */
+    /* init */
 	adapt_init(&s, argc, argv);
-    /* init timer */
-	sdkStartTimer(&(s.gtimer));
-	adapt(&s);
-	sdkStopTimer(&(s.gtimer));
-    atime = sdkGetTimerValue(&(s.gtimer))/1000.0f;
+	/* find good temperature distribution */
+	atime = adapt(&s);
 	printf("ok: total time %.2f secs\n", atime);
-
 	// initialization takes care of memory allocation
 	init(&s, argc, argv);	
-	newseed(&s);
 	/* measure time */
 	sdkResetTimer(&(s.gtimer));
 	sdkStartTimer(&(s.gtimer));
 	/* main simulation */ 
 	for(int i = 0; i < s.realizations; i++){
 		printf("[realization %i of %i]\n", i+1, s.realizations); fflush(stdout);
-		/* try a new seed */
-		newseed(&s);
 		/* multi-GPU PT simulation */
 		#pragma omp parallel private(tid, nt, r, a, b)
 		{

@@ -29,7 +29,7 @@
 int adapt_exchange(setup_t *s, int tid, int p);
 void adapt_ptenergies(setup_t *s, int tid);
 void adapt_swap(setup_t *s, findex_t a, findex_t b );
-void adapt( setup_t *s );
+float adapt( setup_t *s );
 double avfragex( setup_t *s );
 double minfragex( setup_t *s );
 double maxfragex( setup_t *s );
@@ -37,9 +37,10 @@ void insert_temps(setup_t *s);
 void rebuild_temps(setup_t *s);
 void rebuild_indices(setup_t *s);
 
-/* adapt(): adapt temperatures */
-void adapt( setup_t *s ){
+/* adapt(): adapt temperatures --> return time as float */
+float adapt( setup_t *s ){
     /* file for trial data */
+	sdkStartTimer(&(s->gtimer));
     FILE *fw = fopen(string(string(s->obsfolder) + string( + "/trials.dat")).c_str(), "w");
     fprintf(fw, "trial  av  min max\n");
 	/* print the beginning temp */
@@ -101,6 +102,8 @@ void adapt( setup_t *s ){
         rebuild_indices(s);
 	}
     fclose(fw);
+	sdkStopTimer(&(s->gtimer));
+    return sdkGetTimerValue(&(s->gtimer))/1000.0f;
 }
 
 double minfragex( setup_t *s ){
@@ -201,7 +204,7 @@ int adapt_exchange(setup_t *s, int tid, int p){
             delta = (1.0f/s->aT[fnow.f][fnow.i] - 1.0f/s->aT[fleft.f][fleft.i]) *
             (s->aexE[s->arts[fleft.f][fleft.i].f][s->arts[fleft.f][fleft.i].i] -
             s->aexE[s->arts[fnow.f][fnow.i].f][s->arts[fnow.f][fnow.i].i]);
-            double randme = randn();
+            double randme = gpu_rand01(&s->hpcgs, &s->hpcgi);
             //printf("delta=%f exp(-delta) = %f      rand = %f..........", delta, exp(-delta), randme);
 			//if( delta < 0.0 || randn() < exp(-delta) ){
 			if( delta < 0.0 || randme < exp(-delta) ){

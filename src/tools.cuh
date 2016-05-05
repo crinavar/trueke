@@ -650,15 +650,10 @@ void make_realization_statistics( setup_t *s ){
 	}
 }
 
-/* random function normalized between [0,1] */
-double randn(){
-	return double(rand())/double(RAND_MAX);
-}
-
 /* CPU random configuration for the lattice */
-void random_configuration(int N, int* lat){
+void random_configuration(int N, int* lat, uint64_t *state, uint64_t *seq){
 	for(int i=0; i < N; i++){
-		if(randn() >= 0.5)
+		if(gpu_rand01(state, seq) >= 0.5f)
 			lat[i] =  1;
 		else
 			lat[i] = -1;
@@ -673,9 +668,9 @@ void one_configuration(int N, int* lat){
 }
 
 /* CPU random magnetic field H */
-void random_Hi(int N, int* Hlat){
+void random_Hi(int N, int* Hlat, uint64_t *state, uint64_t *seq){
 	for(int i=0; i < N; i++){
-		if(randn() >= 0.5)
+		if(gpu_rand01(state, seq) >= 0.5)
 			Hlat[i] =  1;
 		else
 			Hlat[i] = -1;

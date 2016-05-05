@@ -166,6 +166,7 @@ struct setup{
 	/* custom GPU struct with metadata */
 	gpu_t *gpus;
 	cudaStream_t *rstream, **arstream;
+    uint64_t hpcgs, hpcgi;
     uint64_t **pcga, ***apcga;
     uint64_t **pcgb, ***apcgb;
 #ifdef MEASURE

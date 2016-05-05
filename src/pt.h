@@ -149,7 +149,7 @@ int exchange(setup_t *s, int tid, int a, int b, int p){
 					continue;
 				}
 				delta = (1.0f/s->T[k] - 1.0f/s->T[k-1]) * (s->exE[s->rts[k-1]] - s->exE[s->rts[k]]);				
-                double randme = randn();
+                double randme = gpu_rand01(&s->hpcgs, &s->hpcgi);
 				//printf("\ndelta = %f e^-delta = %f (rand = %f)...", delta, exp((double)-delta), randme);
 				//getchar();
 				// do the exchange 

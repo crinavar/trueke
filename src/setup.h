@@ -51,10 +51,9 @@ void adapt_init(setup_t *s, int argc, char **argv){
         s->plotfolder = "plots";
         make_output_folders(s->obsfolder, s->plotfolder);
     #endif
-    // if seed = 0, then the program chooses a seed
-    /* random seeds */
+    /* random seed */
     s->seed = devseed();
-	srand(s->seed);
+    gpu_pcg32_srandom_r(&s->hpcgs, &s->hpcgi, s->seed, 1);
 	/* pick the GPUs */
 	pickgpus(s);
 	/* set the number of threads as the number of GPUs */
@@ -149,10 +148,9 @@ void adapt_malloc_arrays( setup_t *s ){
 			checkCudaErrors(cudaMalloc(&(s->apcgb[tid][k]), (s->N/4) * sizeof(uint64_t)));
 			checkCudaErrors(cudaStreamCreateWithFlags(&(s->arstream[tid][k]), cudaStreamNonBlocking));
             // sequence approach
-			//kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->arstream[tid][k] >>>(s->apcga[tid][k], s->apcgb[tid][k], s->N/4, s->seed, (unsigned long long)(s->N/4 * (s->R/s->ngpus*tid + k)));
+			kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->arstream[tid][k] >>>(s->apcga[tid][k], s->apcgb[tid][k], s->N/4, s->seed, (unsigned long long)(s->N/4 * (s->R/s->ngpus*tid + k)));
             // skip ahead approach
-			kernel_gpupcg_setup_offset<<<s->prng_grid, s->prng_block, 0, s->arstream[tid][k] >>>(s->apcga[tid][k], s->apcgb[tid][k], s->N/4, s->seed, (unsigned long long)((s->ms * s->pts + s->ds)*4*s->realizations), 
-                    (s->L^3)/4 * (s->R/s->ngpus * tid + k) );
+			//kernel_gpupcg_setup_offset<<<s->prng_grid, s->prng_block, 0, s->arstream[tid][k] >>>(s->apcga[tid][k], s->apcgb[tid][k], s->N/4, s->seed, (unsigned long long)((s->ms * s->pts + s->ds)*4*s->realizations), (s->L^3)/4 * (s->R/s->ngpus * tid + k) );
 			cudaCheckErrors("kernel: prng reset");
 		}
 	}
@@ -211,7 +209,7 @@ void init(setup_t *s, int argc, char **argv){
 	//omp_set_num_threads(s->ngpus);
 	/* build the space of computation for the lattices */
     s->seed = devseed();
-    srand(s->seed);
+    gpu_pcg32_srandom_r(&s->hpcgs, &s->hpcgi, s->seed, 1);
 
 	s->mcblock = dim3(BX, BY/2, BZ);
 	s->mcgrid = dim3((s->L + BX - 1)/BX, (s->L + BY - 1)/(2*BY),  (s->L + BZ - 1)/BZ);
@@ -515,10 +513,5 @@ void getparams(setup_t *s, int argc, char **argv){
 	}
 	if( (s->L % 32) != 0 )
 		fprintf(stderr, "lattice dimensional size must be multiples of 32");
-}
-
-/* generate new seed */
-void newseed(setup_t* s){
-	//s->nseed = time(NULL);
 }
 #endif

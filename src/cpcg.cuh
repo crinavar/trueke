@@ -37,39 +37,10 @@
 
 #include <limits.h>
 #include <inttypes.h>
-struct __align__(16) pcg_state_setseq_64 {    // Internals are *Private*.
-    uint64_t state;             // RNG state.  All values are possible.
-    uint64_t inc;               // Controls which RNG sequence (stream) is // selected. Must *always* be odd.
-};
 
-typedef struct pcg_state_setseq_64 pcg32_random_t;
-__device__ inline uint32_t pcg32_random_r(pcg32_random_t* rng);
-__device__ inline uint32_t gpu_pcg32_random_r(uint64_t *state, uint64_t *inc);
+__host__ __device__ inline uint32_t gpu_pcg32_random_r(uint64_t *state, uint64_t *inc);
 
-// gpu 16byte aligned struct version
-__device__ inline void pcg32_srandom_r(pcg32_random_t* rng, uint64_t initstate, uint64_t initseq){
-    rng->state = 0U;
-    rng->inc = (initseq << 1u) | 1u;
-    pcg32_random_r(rng);
-    rng->state += initstate;
-    pcg32_random_r(rng);
-}
-
-__device__ inline uint32_t pcg32_random_r(pcg32_random_t* rng){
-    uint64_t oldstate = rng->state;
-    rng->state = oldstate * 6364136223846793005ULL + rng->inc;
-    uint32_t xorshifted = ((oldstate >> 18u) ^ oldstate) >> 27u;
-    uint32_t rot = oldstate >> 59u;
-    return (xorshifted >> rot) | (xorshifted << ((-rot) & 31));
-}
-
-__device__ inline float pcgrand(pcg32_random_t *rng){
-    return (float) pcg32_random_r(rng) / (float)(UINT_MAX);
-}
-
-
-// fully separated GPU version
-__device__ inline void gpu_pcg32_srandom_r(uint64_t *state, uint64_t *inc, uint64_t initstate, uint64_t initseq){
+__host__ __device__ inline void gpu_pcg32_srandom_r(uint64_t *state, uint64_t *inc, uint64_t initstate, uint64_t initseq){
     *state = 0U;
     *inc = (initseq << 1u) | 1u;
     gpu_pcg32_random_r(state, inc);
@@ -78,7 +49,7 @@ __device__ inline void gpu_pcg32_srandom_r(uint64_t *state, uint64_t *inc, uint6
 }
 
 
-__device__ inline uint32_t gpu_pcg32_random_r(uint64_t *state, uint64_t *inc){
+__host__ __device__ inline uint32_t gpu_pcg32_random_r(uint64_t *state, uint64_t *inc){
     uint64_t oldstate = *state;
     *state = oldstate * 6364136223846793005ULL + *inc;
     uint32_t xorshifted = ((oldstate >> 18u) ^ oldstate) >> 27u;
@@ -87,12 +58,12 @@ __device__ inline uint32_t gpu_pcg32_random_r(uint64_t *state, uint64_t *inc){
     //return ((xorshifted >> rot) | (xorshifted << ((-rot) & 31)))*INV_UINT_MAX;
 }
 
-__device__ inline float gpu_rand01(uint64_t *state, uint64_t *inc){
+__host__ __device__ inline float gpu_rand01(uint64_t *state, uint64_t *inc){
     //return (float) gpu_pcg32_random_r(state, inc) / (float)(UINT_MAX);
     return (float) gpu_pcg32_random_r(state, inc) * INV_UINT_MAX;
 }
 
-__device__ uint64_t pcg_advance(uint64_t state, uint64_t delta, uint64_t cur_mult,
+__host__ __device__ uint64_t pcg_advance(uint64_t state, uint64_t delta, uint64_t cur_mult,
                             uint64_t cur_plus)
 {
     uint64_t acc_mult = 1u;
@@ -109,7 +80,7 @@ __device__ uint64_t pcg_advance(uint64_t state, uint64_t delta, uint64_t cur_mul
     return acc_mult * state + acc_plus;
 }
 
-__device__ void pcg_skip_ahead(uint64_t *state, uint64_t *inc, uint64_t delta){
+__host__ __device__ void pcg_skip_ahead(uint64_t *state, uint64_t *inc, uint64_t delta){
     *state = pcg_advance(*state, delta, PCG_DEFAULT_MULTIPLIER_64, *inc);
 }
 
