@@ -208,8 +208,8 @@ void init(setup_t *s, int argc, char **argv){
 	/* set the number of threads as the number of GPUs */
 	//omp_set_num_threads(s->ngpus);
 	/* build the space of computation for the lattices */
-    s->seed = devseed();
-    gpu_pcg32_srandom_r(&s->hpcgs, &s->hpcgi, s->seed, 1);
+    //s->seed = devseed();
+    //gpu_pcg32_srandom_r(&s->hpcgs, &s->hpcgi, s->seed, 1);
 
 	s->mcblock = dim3(BX, BY/2, BZ);
 	s->mcgrid = dim3((s->L + BX - 1)/BX, (s->L + BY - 1)/(2*BY),  (s->L + BZ - 1)/BZ);
@@ -307,7 +307,9 @@ void malloc_arrays( setup_t *s ){
 			checkCudaErrors(cudaMalloc(&(s->pcga[k]), (s->N/4) * sizeof(uint64_t)));
 			checkCudaErrors(cudaMalloc(&(s->pcgb[k]), (s->N/4) * sizeof(uint64_t)));
 			checkCudaErrors(cudaStreamCreateWithFlags(&(s->rstream[k]), cudaStreamNonBlocking));
-			kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->pcga[k], s->pcgb[k], s->N/4, s->seed, (unsigned long long)((s->R/s->ngpus)*tid + k));
+			kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->pcga[k], s->pcgb[k], s->N/4, s->seed, (unsigned long long)(s->N/4 * (tid*s->R/s->ngpus + k)));
+            printf("thread %i,  N=%i   N/4 = %i  R = %i     ngpus =  %i         R/ngpus = %i        k = %i           N/4tid*R/ngpus + k = %i\n", tid, s->N, s->N/4, s->R, s->ngpus, s->R/s->ngpus, k, s->N/4 * (tid*s->R/s->ngpus + k));
+            //getchar();
 			//cudaDeviceSynchronize();
 			cudaCheckErrors("kernel: prng reset");
 		}	

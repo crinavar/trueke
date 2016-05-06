@@ -42,6 +42,7 @@ __global__ void kernel_gpupcg_setup(uint64_t *state, uint64_t *inc, int N, int s
 	if( x < N ){
         // exclusive seeds, seq pairs
         gpu_pcg32_srandom_r(&state[x], &inc[x], x + seed + seq, seq);
+
         // exclusive seeds common seq
         //gpu_pcg32_srandom_r(&state[x], &inc[x], x + seed + seq, 1);
 
