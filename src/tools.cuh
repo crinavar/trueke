@@ -216,8 +216,8 @@ void adapt_reset_gpudata(setup_t *s, int tid){
 		//kernel_reset_random<<< s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->dlat[k], s->N, s->dstates[k]);
 		//cudaCheckErrors("kernel: reset spins random");
 		/* doing a per-realizaton reset only works if seed is different each time */
-		//kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->arstream[tid][k] >>>(s->apcga[tid][k], s->apcgb[tid][k], s->N/4, s->seed, (unsigned long long)((s->R/s->ngpus)*tid + k));
-        kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->pcga[k], s->pcgb[k], s->N/4, s->seed + s->N/4 * k, k);
+		//kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->arstream[tid][k] >>>(s->apcga[tid][k], s->apcgb[tid][k], s->N/4, s->seed , (unsigned long long)((s->R/s->ngpus)*tid + k));
+		kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->arstream[tid][k] >>>(s->apcga[tid][k], s->apcgb[tid][k], s->N/4, s->seed + s->N/4 *k, k);
 		cudaCheckErrors("kernel: prng reset");
 	}
     #pragma omp barrier
