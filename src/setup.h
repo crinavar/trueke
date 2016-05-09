@@ -315,7 +315,7 @@ void malloc_arrays( setup_t *s ){
 			checkCudaErrors(cudaMalloc(&(s->pcgb[k]), (s->N/4) * sizeof(uint64_t)));
 			checkCudaErrors(cudaStreamCreateWithFlags(&(s->rstream[k]), cudaStreamNonBlocking));
 			kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->pcga[k], s->pcgb[k], s->N/4, s->seed + s->N/4 * k, k);
-            printf("thread %i,  N=%i   N/4 = %i  R = %i     ngpus =  %i     R/ngpus = %i   k = %i   kN/4 = %i  seed = %lu \n", tid, s->N, s->N/4, s->R, s->ngpus, s->R/s->ngpus, k, s->N/4 * k, s->seed + s->N/4*k);
+            //printf("thread %i,  N=%i   N/4 = %i  R = %i     ngpus =  %i     R/ngpus = %i   k = %i   kN/4 = %i  seed = %lu \n", tid, s->N, s->N/4, s->R, s->ngpus, s->R/s->ngpus, k, s->N/4 * k, s->seed + s->N/4*k);
             //getchar();
 			//cudaDeviceSynchronize();
 			cudaCheckErrors("kernel: prng reset");
