@@ -52,8 +52,10 @@ void adapt_init(setup_t *s, int argc, char **argv){
         make_output_folders(s->obsfolder, s->plotfolder);
     #endif
     /* random seed */
-    s->seed = devseed();
-    gpu_pcg32_srandom_r(&s->hpcgs, &s->hpcgi, s->seed, 1);
+    if(s->seed == -1){
+        s->seed = devseed();
+    }
+    gpu_pcg32_srandom_r(&s->hpcgs, &s->hpcgi, s->seed*10, 1);
 	/* pick the GPUs */
 	pickgpus(s);
 	/* set the number of threads as the number of GPUs */
@@ -466,8 +468,8 @@ void printparams(setup_t *s){
 /* get parameters */
 void getparams(setup_t *s, int argc, char **argv){
 	/* if the number or arguments is not correct, stop the program */
-	if(argc != 26){
-		printf("run as:\n./bin/trueke -l <L> <R> -t <T> <dT> -a <tri> <ins> <pts> <ms> -h <h> -s <pts> <mz> <eq> <ms> <meas> <per> -br <b> <r> -g <x>\n");
+	if(argc != 28){
+		printf("run as:\n./bin/trueke -l <L> <R> -t <T> <dT> -a <tri> <ins> <pts> <ms> -h <h> -s <pts> <mz> <eq> <ms> <meas> <per> -br <b> <r> -z <seed> -g <x>\n");
 		exit(1);
 	}
 	else{
@@ -510,6 +512,10 @@ void getparams(setup_t *s, int argc, char **argv){
 			/* number of gpus */
 			else if(strcmp(argv[i],"-g") == 0){
 				s->ngpus = atoi(argv[i+1]);
+			}
+			/* seed, (-1 for /dev/urandom) */
+			else if(strcmp(argv[i],"-z") == 0){
+				s->seed = atoi(argv[i+1]);
 			}
 		}
 	}

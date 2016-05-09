@@ -40,7 +40,7 @@ Make sure the bin, inc and lib paths to the corresponding ones.
 
 
 # (5) how to run
-./bin/trueke -l \<L\> \<R\> -t \<T\> \<dT\> -a \<tri\> <ins\> \<pts\> \<ms\> -h \<h\> -s \<pts\> \<mz\> \<eq\> \<ms\> \<meas\> \<per\> -br \<b\> \<r\> -g \<x\>
+./bin/trueke -l \<L\> \<R\> -t \<T\> \<dT\> -a \<tri\> <ins\> \<pts\> \<ms\> -h \<h\> -s \<pts\> \<mz\> \<eq\> \<ms\> \<meas\> \<per\> -br \<b\> \<r\> -z \<seed\> -g \<x\>
 
 
 
@@ -52,6 +52,7 @@ Make sure the bin, inc and lib paths to the corresponding ones.
 - <b>External Field (-h)</b>: magnetic field strength \<h\> \(tipically, 0 \< h \< 3\).
 - <b>Simulation (-s)</b>: \<pts\> ex, meas at \<mz\>, equil \<eq\> sweeps, \<ms\> sweeps/ex, \<per\> ex/\<meas\>
 - <b>Repetition (-br)</b>: \<b\> blocks of \<ms\>, \<r\> disorder realizations.
+- <b>Seed (-z)</b>: use \<seed\> as base seed for the PRNGs.
 - <b>Multi-GPU (-g)</b>: use \<x\> GPUs.
 
 
@@ -60,4 +61,4 @@ Make sure the bin, inc and lib paths to the corresponding ones.
 
 
 # (4) Example execution using two GPUs 
-- ./bin/trueke -l 64 11 -t 4.7 0.1 -a 58 2 2000 10 -h 1.0 -s 5000 3000 100 5 1 1 -br 1 2000 -g 2
+- ./bin/trueke -l 64 11 -t 4.7 0.1 -a 58 2 2000 10 -h 1.0 -s 5000 3000 100 5 1 1 -br 1 2000 -z 7919 -g 2
