@@ -51,11 +51,14 @@ void adapt_init(setup_t *s, int argc, char **argv){
         s->plotfolder = "plots";
         make_output_folders(s->obsfolder, s->plotfolder);
     #endif
-    /* random seed */
-    if(s->seed == -1){
-        s->seed = devseed();
+    /* parameter seed or random seed */
+    if(s->seed != 0){
+        gpu_pcg32_srandom_r(&s->hpcgs, &s->hpcgi, s->seed, 1);
     }
-    gpu_pcg32_srandom_r(&s->hpcgs, &s->hpcgi, s->seed*10, 1);
+    else{
+        gpu_pcg32_srandom_r(&s->hpcgs, &s->hpcgi, devseed(), 1);
+    }
+    s->seed = gpu_pcg32_random_r(&s->hpcgs, &s->hpcgi);
 	/* pick the GPUs */
 	pickgpus(s);
 	/* set the number of threads as the number of GPUs */
@@ -209,10 +212,12 @@ void adjustparams(setup_t *s){
 void init(setup_t *s, int argc, char **argv){
 	/* set the number of threads as the number of GPUs */
 	//omp_set_num_threads(s->ngpus);
-	/* build the space of computation for the lattices */
-    //s->seed = devseed();
     //gpu_pcg32_srandom_r(&s->hpcgs, &s->hpcgi, s->seed, 1);
+    
+    // get another seed from master seeder
+    s->seed = gpu_pcg32_random_r(&s->hpcgs, &s->hpcgi);
 
+	/* build the space of computation for the lattices */
 	s->mcblock = dim3(BX, BY/2, BZ);
 	s->mcgrid = dim3((s->L + BX - 1)/BX, (s->L + BY - 1)/(2*BY),  (s->L + BZ - 1)/BZ);
 	s->lblock = dim3( BLOCKSIZE1D, 1, 1);
@@ -513,7 +518,7 @@ void getparams(setup_t *s, int argc, char **argv){
 			else if(strcmp(argv[i],"-g") == 0){
 				s->ngpus = atoi(argv[i+1]);
 			}
-			/* seed, (-1 for /dev/urandom) */
+			/* seed, (pass 0 for /dev/urandom) */
 			else if(strcmp(argv[i],"-z") == 0){
 				s->seed = atoi(argv[i+1]);
 			}
