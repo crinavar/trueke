@@ -587,6 +587,9 @@ void accum_realization_statistics( setup_t *s, int tid, int a, int b, int realiz
 		if( s->obstable[q].rdata[C_POS].n == 0 ){
 			s->obstable[q].rdata[C_POS].x1 = val;
 		}
+        printf("tid=%i   k=%i  T=%f    C=%f\n", tid, k, T, val);
+        getchar();
+
 		variance_step(val, &(s->obstable[q].rdata[C_POS].n), &(s->obstable[q].rdata[C_POS].mean), &(s->obstable[q].rdata[C_POS].w1), &(s->obstable[q].rdata[C_POS].w2), s->obstable[q].rdata[C_POS].x1, 
 						&(s->obstable[q].rdata[C_POS].lastx));
 
