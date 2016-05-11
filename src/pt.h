@@ -84,53 +84,6 @@ void pt(setup_t *s, int tid, int a, int b){
 		}
 }
 
-/* energies for all replicas using Kepler shfl reductions and streams */
-void ptenergies(setup_t *s, int tid, int a, int b){
-	/* quick reset of the device reduction variables */
-	kernel_reset<float><<< (b-a + BLOCKSIZE1D - 1)/BLOCKSIZE1D, BLOCKSIZE1D, 0, s->rstream[a] >>> (s->dE[tid], b-a, 0.0f);
-	cudaDeviceSynchronize();
-	/* compute one energy reduction for each replica */
-	for(int k = a; k < b; ++k){
-		/* launch reduction kernel for k-th replica */
-		//s->E[k] = 0.0f;
-		redenergy(s, tid, a, b, k);
-		//cudaMemcpy(s->hlat[k], s->dlat[k], sizeof(int)*s->N, cudaMemcpyDeviceToHost);
-		//double cpuE 	= (double)compute_E(s->hlat[k], s->hH, s->h, s->L);
-		//s->E[k] = (float)cpuE;
-		//printf("        cpu E[%i] = %f\n", k, cpuE);
-	}
-	cudaDeviceSynchronize();	cudaCheckErrors("kernel_redenergy");
-	cudaMemcpy(s->exE + a, s->dE[tid], (b-a)*sizeof(float), cudaMemcpyDeviceToHost);
-    //printf("\ntid=%i          a  b    %i  %i\n", tid, a, b); fflush(stdout);
-    //#pragma omp barrier
-	//if(tid == 0){
-    //    printarray<float>(s->exE, s->R, "exE");
-    //}
-	//printf("a = %i    b = %i\n", a, b);
-	//for(int k = a; k < b; ++k){
-	//	printf("compute E[%i] = %f\n", k, s->E[k]);
-	//}
-	//getchar();
-}
-
-/* swap temperatures */
-void swap(setup_t *s, int a, int b ){
-	//printf("\nswapping T%i  T%i\n", a, b);
-	int t1, t2, taux, raux;
-	t1 = s->rts[a];
-	t2 = s->rts[b];
-	taux = s->trs[t1];
-	raux = s->rts[a];
-
-	/* swap rts */
-	s->rts[a] = s->rts[b];
-	s->rts[b] = raux; 
-
-	/* swap trs */
-	s->trs[t1] = s->trs[t2];
-	s->trs[t2] = taux;
-}
-
 /* exchange phase */
 int exchange(setup_t *s, int tid, int a, int b, int p){
 	/* count the number of exchanges */
@@ -197,6 +150,54 @@ int exchange(setup_t *s, int tid, int a, int b, int p){
 	#pragma omp barrier
 	return ex;
 }
+
+/* energies for all replicas using Kepler shfl reductions and streams */
+void ptenergies(setup_t *s, int tid, int a, int b){
+	/* quick reset of the device reduction variables */
+	kernel_reset<float><<< (b-a + BLOCKSIZE1D - 1)/BLOCKSIZE1D, BLOCKSIZE1D, 0, s->rstream[a] >>> (s->dE[tid], b-a, 0.0f);
+	cudaDeviceSynchronize();
+	/* compute one energy reduction for each replica */
+	for(int k = a; k < b; ++k){
+		/* launch reduction kernel for k-th replica */
+		//s->E[k] = 0.0f;
+		redenergy(s, tid, a, b, k);
+		//cudaMemcpy(s->hlat[k], s->dlat[k], sizeof(int)*s->N, cudaMemcpyDeviceToHost);
+		//double cpuE 	= (double)compute_E(s->hlat[k], s->hH, s->h, s->L);
+		//s->E[k] = (float)cpuE;
+		//printf("        cpu E[%i] = %f\n", k, cpuE);
+	}
+	cudaDeviceSynchronize();	cudaCheckErrors("kernel_redenergy");
+	cudaMemcpy(s->exE + a, s->dE[tid], (b-a)*sizeof(float), cudaMemcpyDeviceToHost);
+    //printf("\ntid=%i          a  b    %i  %i\n", tid, a, b); fflush(stdout);
+    //#pragma omp barrier
+	//if(tid == 0){
+    //    printarray<float>(s->exE, s->R, "exE");
+    //}
+	//printf("a = %i    b = %i\n", a, b);
+	//for(int k = a; k < b; ++k){
+	//	printf("compute E[%i] = %f\n", k, s->E[k]);
+	//}
+	//getchar();
+}
+
+/* swap temperatures */
+void swap(setup_t *s, int a, int b ){
+	//printf("\nswapping T%i  T%i\n", a, b);
+	int t1, t2, taux, raux;
+	t1 = s->rts[a];
+	t2 = s->rts[b];
+	taux = s->trs[t1];
+	raux = s->rts[a];
+
+	/* swap rts */
+	s->rts[a] = s->rts[b];
+	s->rts[b] = raux; 
+
+	/* swap trs */
+	s->trs[t1] = s->trs[t2];
+	s->trs[t2] = taux;
+}
+
 
 /* measure phase occurs at mzone */
 #ifdef MEASURE

@@ -171,6 +171,7 @@ void adapt_threadset(setup_t *s, int *tid, int *nt, int *r){
 /* reset gpu data structures */
 void reset_gpudata(setup_t *s, int tid, int a, int b){
     // getting new need
+    #pragma omp barrier
     if(tid == 0){
         // choose a new seed from the sequential PRNG
         s->seed = gpu_pcg32_random_r(&s->hpcgs, &s->hpcgi);
@@ -181,11 +182,12 @@ void reset_gpudata(setup_t *s, int tid, int a, int b){
 		/* up spins */
 		kernel_reset<int><<< s->lgrid, s->lblock, 0, s->rstream[k] >>>(s->dlat[k], s->N, 1);
 		cudaCheckErrors("kernel: reset spins up");
+
 		/* random spins */
 		//kernel_reset_random<<< s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->dlat[k], s->N, s->dstates[k]);
 		//cudaCheckErrors("kernel: reset spins random");
+
 		/* doing a per-realizaton reset only works if seed is different each time */
-		//kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->pcga[k], s->pcgb[k], s->N/4, s->seed, (unsigned long long)(s->R/s->ngpus*tid + k));
         kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->pcga[k], s->pcgb[k], s->N/4, s->seed + s->N/4 * k, k);
 		cudaCheckErrors("kernel: prng reset");
 	}
@@ -197,6 +199,7 @@ void reset_gpudata(setup_t *s, int tid, int a, int b){
 /* reset gpu data structures */
 void adapt_reset_gpudata(setup_t *s, int tid){
     //printf("adapt_reset\n");
+    #pragma omp barrier
     if(tid == 0){
         // choose a new seed from the sequential PRNG
         s->seed = gpu_pcg32_random_r(&s->hpcgs, &s->hpcgi);
@@ -480,6 +483,7 @@ void accum_mcmc_statistics( setup_t *s, int tid, int a, int b){
 	cudaMemcpyAsync(s->F2 + a, s->dF2[tid], (b-a)*sizeof(float3), cudaMemcpyDeviceToHost, s->rstream[a + (3 % (b-a))]);
 	cudaDeviceSynchronize();	
 	cudaCheckErrors("cuda memcpys accum_mcmc_statistics");
+    #pragma omp barrier
 	/* accumulate (write) data in temp order, but read from replica order */
 	for(int k = a; k < b; ++k){
 		int q = s->trs[k];
@@ -533,6 +537,7 @@ void accum_block_statistics( setup_t *s, int tid, int a, int b ){
 	double values[NUM_PHYSICAL_VALUES - NUM_SPECIAL];
 	double N = (double)s->N;
 	/* use temp order */
+    #pragma omp barrier
 	for(int k = a; k < b; ++k){
 		q = s->trs[k];
 		values[E_POS] 	= s->obstable[q].mdata.E * invsteps;
@@ -558,6 +563,7 @@ void accum_block_statistics( setup_t *s, int tid, int a, int b ){
 /* accum realization statistics */
 #ifdef MEASURE
 void accum_realization_statistics( setup_t *s, int tid, int a, int b, int realizations ){
+    #pragma omp barrier
 	for(int k = a; k < b; ++k){
 		/* traverse replicas, but access in temp order */
 		int q = s->trs[k];
@@ -587,8 +593,8 @@ void accum_realization_statistics( setup_t *s, int tid, int a, int b, int realiz
 		if( s->obstable[q].rdata[C_POS].n == 0 ){
 			s->obstable[q].rdata[C_POS].x1 = val;
 		}
-        printf("tid=%i   k=%i  T=%f    C=%.10f\n", tid, k, T, val);
-        getchar();
+        //printf("tid=%i   k=%i  T=%f    C=%.10f\n", tid, k, T, val);
+        //getchar();
 
 		variance_step(val, &(s->obstable[q].rdata[C_POS].n), &(s->obstable[q].rdata[C_POS].mean), &(s->obstable[q].rdata[C_POS].w1), &(s->obstable[q].rdata[C_POS].w2), s->obstable[q].rdata[C_POS].x1, 
 						&(s->obstable[q].rdata[C_POS].lastx));
