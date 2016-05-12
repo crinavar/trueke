@@ -125,20 +125,25 @@ void reset(setup_t *s, int tid, int a, int b){
 	/* reset block statistics */
 	reset_block_statistics( s, tid, a, b);
 #endif
+    #pragma omp barrier
 	/* reset gpu data */
 	reset_gpudata(s, tid, a, b);
+    #pragma omp barrier
 
 	/* reset ex counters */
 	reset_array<float>((float*)(s->ex + tid*(b-a)), b-a, 0.0f);
+    #pragma omp barrier
 
 	/* reset average ex counters */
 	reset_array<float>((float*)(s->avex + tid*(b-a)), b-a, 0.0f);
+    #pragma omp barrier
 
 	/* reset index arrays */
 	for(int i = a; i < b; ++i){
 		s->rts[i] = s->trs[i] = i;
 		s->avex[i] = 0.0;
 	}
+    #pragma omp barrier
 }
 
 /* set the thread indices for location */
@@ -596,7 +601,7 @@ void accum_realization_statistics( setup_t *s, int tid, int a, int b, int realiz
 		if( s->obstable[q].rdata[C_POS].n == 0 ){
 			s->obstable[q].rdata[C_POS].x1 = val;
 		}
-        //printf("tid=%i   k=%i  T=%f    C=%.10f\n", tid, k, T, val);
+        printf("tid=%i   k=%i  T=%f    C=%.10f\n", tid, k, T, val);
         //getchar();
 
 		variance_step(val, &(s->obstable[q].rdata[C_POS].n), &(s->obstable[q].rdata[C_POS].mean), &(s->obstable[q].rdata[C_POS].w1), &(s->obstable[q].rdata[C_POS].w2), s->obstable[q].rdata[C_POS].x1, 
@@ -808,6 +813,7 @@ void adapt_hdist(setup_t *s, int tid){
 	//cudaMemcpy(dH, hH, sizeof(int)*N, cudaMemcpyHostToDevice);
 
 	/* generate dist in multiple GPUs */
+	#pragma omp barrier
 	if( tid == 0 ){
 		/* we pass the first prng array from the corresponding GPU */
         kernel_reset_random_gpupcg<<< s->lgrid, s->lblock>>>(s->dH[tid], s->N, s->apcga[tid][0], s->apcgb[tid][0]);	
@@ -834,6 +840,7 @@ void hdist(setup_t *s, int tid, int a, int b){
 	//cudaMemcpy(dH, hH, sizeof(int)*N, cudaMemcpyHostToDevice);
 
 	/* generate dist in multiple GPUs */
+	#pragma omp barrier
 	if( tid == 0 ){
 		/* we pass the first prng array from the corresponding GPU */
         kernel_reset_random_gpupcg<<< s->lgrid, s->lblock>>>(s->dH[tid], s->N, s->pcga[a], s->pcgb[a]);	
