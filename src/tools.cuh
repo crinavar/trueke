@@ -522,6 +522,7 @@ void accum_mcmc_statistics( setup_t *s, int tid, int a, int b){
 		s->obstable[q].mdata.quadM	+= M*M*M*M;
 		s->obstable[q].mdata.F		+= F;
 	}
+    #pragma omp barrier
 	//for(int i = a; i < b; ++i){
 	//	printf("obstable[%i].mdata.E = %f\n", i, s->obstable[i].mdata.E);
 	//}
@@ -554,6 +555,7 @@ void accum_block_statistics( setup_t *s, int tid, int a, int b ){
 			variance_step(	values[j], 	&(s->obstable[q].bdata[j].n), 		&(s->obstable[q].bdata[j].mean),	&(s->obstable[q].bdata[j].w1), &(s->obstable[q].bdata[j].w2), 	s->obstable[q].bdata[j].x1, 		&(s->obstable[q].bdata[j].lastx) );
 		}
 	}
+    #pragma omp barrier
 	//for(int k = a; k < b; ++k){
 	//	printf("R%i  MEAN BLOCK        E = %f       M = %f\n\n", k, s->obstable[k].bdata[E_POS].mean, s->obstable[k].bdata[M_POS].mean);
 	//}
@@ -647,6 +649,7 @@ void accum_realization_statistics( setup_t *s, int tid, int a, int b, int realiz
 		variance_step(val, &(s->obstable[q].rdata[EXCHANGE_POS].n), &(s->obstable[q].rdata[EXCHANGE_POS].mean), &(s->obstable[q].rdata[EXCHANGE_POS].w1), &(s->obstable[q].rdata[EXCHANGE_POS].w2),
 							s->obstable[q].rdata[EXCHANGE_POS].x1, &(s->obstable[q].rdata[EXCHANGE_POS].lastx));
 	}
+    #pragma omp barrier
 }
 #endif
 
