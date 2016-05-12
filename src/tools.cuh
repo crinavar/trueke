@@ -548,6 +548,7 @@ void accum_block_statistics( setup_t *s, int tid, int a, int b ){
 	for(int k = a; k < b; ++k){
 		q = s->trs[k];
 		values[E_POS] 	= s->obstable[q].mdata.E * invsteps;
+        printf("tid=%i k=%i T=%f  E=%f\n", tid, k, s->T[q], values[E_POS]); 
 		values[M_POS] 	= s->obstable[q].mdata.M * invsteps;
 		values[SQE_POS] = s->obstable[q].mdata.sqE * invsteps;
 		values[SQM_POS] = s->obstable[q].mdata.sqM * invsteps;
