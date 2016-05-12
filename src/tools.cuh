@@ -120,6 +120,7 @@ void reset_array(T *a, int n, T val){
 	
 /* per realization reset */
 void reset(setup_t *s, int tid, int a, int b){
+    #pragma omp barrier
 #ifdef MEASURE
 	/* reset block statistics */
 	reset_block_statistics( s, tid, a, b);
