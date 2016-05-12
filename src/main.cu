@@ -104,7 +104,7 @@ int main(int argc, char **argv){
 			a = tid * r;
 			b = a + r;
 			/* reset some data at each realization*/
-			reset(&s, tid, a, b);
+			//reset(&s, tid, a, b);
 			
 			/* distribution for H */
 			hdist(&s, tid, a, b);
