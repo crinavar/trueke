@@ -593,7 +593,7 @@ void accum_realization_statistics( setup_t *s, int tid, int a, int b, int realiz
 		T = (double)s->T[q];
 
 
-
+        #pragma omp barrier
 		/* specific heat */
 		A = s->obstable[q].bdata[E_POS].mean;
 		sqA = s->obstable[q].bdata[SQE_POS].mean;
