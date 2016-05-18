@@ -93,31 +93,46 @@ int main(int argc, char **argv){
 	/* measure time */
 	sdkResetTimer(&(s.gtimer));
 	sdkStartTimer(&(s.gtimer));
-	/* main simulation */ 
-	for(int i = 0; i < s.realizations; i++){
-		printf("[realization %i of %i]\n", i+1, s.realizations); fflush(stdout);
-		/* multi-GPU PT simulation */
-		#pragma omp parallel private(tid, nt, r, a, b)
-		{
+	#pragma omp parallel private(tid, nt, r, a, b) shared(s)
+	{
+		/* main simulation */ 
+		for(int i = 0; i < s.realizations; i++){
+			/* multi-GPU PT simulation */
 			/* set the thread */
 			threadset(&s, &tid, &nt, &r);
 			a = tid * r;
 			b = a + r;
+			if(tid == 0){
+				printf("[realization %i of %i]\n", i+1, s.realizations); fflush(stdout);
+			}
 			/* reset some data at each realization*/
 			reset(&s, tid, a, b);
-			
 			/* distribution for H */
 			hdist(&s, tid, a, b);
-
+			kernel_reset<float><<< (b-a + BLOCKSIZE1D - 1)/BLOCKSIZE1D, BLOCKSIZE1D, 0, s.rstream[a] >>> (s.dE[tid], b-a, 0.0f);
+			cudaDeviceSynchronize();	cudaCheckErrors("kernel_reset dE");
+			/* up values */
+			//#pragma omp barrier
+			//#pragma omp barrier
+			//if(tid == 0){
+				//printarray<float>(s.exE, s.R, "exE");
+			//}
+			//#pragma omp barrier
 			/* equilibration */
 			equilibration(&s, tid, a, b);
-
+			//#pragma omp barrier
+			//ptenergies(&s, tid, a, b);
+			//#pragma omp barrier
+			//if(tid == 0){
+			//	printarray<float>(s.exE, s.R, "exE");
+			//}
 			/* parallel tempering */
 			pt(&s, tid, a, b);
 			#ifdef MEASURE
 				/* accumulate realization statistics */
 				accum_realization_statistics( &s, tid, a, b, s.realizations );
 			#endif
+			#pragma omp barrier
 		}
 	}
 #ifdef MEASURE

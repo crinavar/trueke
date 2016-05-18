@@ -25,7 +25,7 @@
 #ifndef _CPUTOOLS_H_
 #define _CPUTOOLS_H_
 
-double compute_E(int *hlat, int *hH, double h,  int width, int height, int length){
+double cpuE(int *hlat, int *hH, double h,  int width, int height, int length){
 		double E=0.0;
 		int idx, idy, idz;
 		for(idx=0; idx<width; idx++){
@@ -54,7 +54,7 @@ double compute_E(int *hlat, int *hH, double h,  int width, int height, int lengt
 		return -E;
 }
 
-double compute_F(int *hlat, int width, int height, int length){
+double cpuF(int *hlat, int width, int height, int length){
 		double F = 0.0;
 		double mfx1=0.0;
 		double mfx2=0.0;
@@ -96,7 +96,7 @@ double compute_F(int *hlat, int width, int height, int length){
 		return F;
 }
 
-int reduceM(int *hM, int width, int height, int length){
+int cpuM(int *hM, int width, int height, int length){
 	int M = 0;
 	for(int i=0; i<width*height*length; i++)
 		M += hM[i];

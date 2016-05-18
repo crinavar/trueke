@@ -141,7 +141,7 @@ void reset(setup_t *s, int tid, int a, int b){
 	/* reset index arrays */
 	for(int i = a; i < b; ++i){
 		s->rts[i] = s->trs[i] = i;
-		s->avex[i] = 0.0;
+		s->exE[i] = 0.0;
 	}
     #pragma omp barrier
 }
@@ -184,6 +184,7 @@ void reset_gpudata(setup_t *s, int tid, int a, int b){
         printf("[%lu]\n", s->seed);
     }
     #pragma omp barrier
+	//printf("tid=%i     a=%i    b=%i\n", tid, a, b); fflush(stdout);
 	for(int k = a; k < b; ++k){
 		/* up spins */
 		kernel_reset<int><<< s->lgrid, s->lblock, 0, s->rstream[k] >>>(s->dlat[k], s->N, 1);
@@ -548,7 +549,7 @@ void accum_block_statistics( setup_t *s, int tid, int a, int b ){
 	for(int k = a; k < b; ++k){
 		q = s->trs[k];
 		values[E_POS] 	= s->obstable[q].mdata.E * invsteps;
-        printf("tid=%i k=%i T=%f  E=%f\n", tid, k, s->T[q], values[E_POS]); 
+        //printf("tid=%i k=%i T=%f  E=%f\n", tid, k, s->T[q], values[E_POS]); 
 		values[M_POS] 	= s->obstable[q].mdata.M * invsteps;
 		values[SQE_POS] = s->obstable[q].mdata.sqE * invsteps;
 		values[SQM_POS] = s->obstable[q].mdata.sqM * invsteps;
@@ -602,7 +603,7 @@ void accum_realization_statistics( setup_t *s, int tid, int a, int b, int realiz
 		if( s->obstable[q].rdata[C_POS].n == 0 ){
 			s->obstable[q].rdata[C_POS].x1 = val;
 		}
-        printf("tid=%i   k=%i  T=%f    C=%.10f\n", tid, k, T, val);
+        //printf("tid=%i   k=%i  T=%f    C=%.10f\n", tid, k, T, val);
         //getchar();
 
 		variance_step(val, &(s->obstable[q].rdata[C_POS].n), &(s->obstable[q].rdata[C_POS].mean), &(s->obstable[q].rdata[C_POS].w1), &(s->obstable[q].rdata[C_POS].w2), s->obstable[q].rdata[C_POS].x1, 
@@ -809,10 +810,6 @@ void printarrayfrag(T **a, int n, int *m, const char *name){
 }
 /* GPU random magnetic field H */
 void adapt_hdist(setup_t *s, int tid){
-	/* generate dist using CPU */
-	//random_Hi(N, hH);
-	//cudaMemcpy(dH, hH, sizeof(int)*N, cudaMemcpyHostToDevice);
-
 	/* generate dist in multiple GPUs */
 	#pragma omp barrier
 	if( tid == 0 ){
@@ -836,9 +833,36 @@ void adapt_hdist(setup_t *s, int tid){
 
 /* GPU random magnetic field H */
 void hdist(setup_t *s, int tid, int a, int b){
-	/* generate dist using CPU */
-	//random_Hi(N, hH);
-	//cudaMemcpy(dH, hH, sizeof(int)*N, cudaMemcpyHostToDevice);
+
+	/*
+	if(tid == 0){
+		for(int i=0; i<s->N; ++i){
+			if(gpu_rand01(&s->hpcgs, &s->hpcgi) >= 0.5){
+				s->hH[i] = 1;
+			}
+			else{
+				s->hH[i] = -1;
+			}
+			if(i < 20){
+				printf("hH[%i] = %i\n", i, s->hH[i]);
+			}
+		}
+	}
+	#pragma omp barrier
+	checkCudaErrors(cudaMemcpy(s->dH[tid], s->hH, sizeof(int) * s->N, cudaMemcpyHostToDevice));	
+	#pragma omp barrier
+	return;
+	*/
+
+
+
+
+
+
+
+
+
+
 
 	/* generate dist in multiple GPUs */
 	#pragma omp barrier
@@ -846,17 +870,28 @@ void hdist(setup_t *s, int tid, int a, int b){
 		/* we pass the first prng array from the corresponding GPU */
         kernel_reset_random_gpupcg<<< s->lgrid, s->lblock>>>(s->dH[tid], s->N, s->pcga[a], s->pcgb[a]);	
 		cudaCheckErrors("prng random distribution H");
-		checkCudaErrors(cudaMemcpy(s->hH, s->dH[tid], sizeof(int)*s->N, cudaMemcpyDeviceToHost));		
+		checkCudaErrors(cudaMemcpy(s->hH, s->dH[tid], sizeof(int)*s->N, cudaMemcpyDeviceToHost));
+		/*
+		for(int i=0; i<s->N; ++i){
+			printf("h[%i] = %i\n", i, s->hH[i]);
+		}
+		getchar();
+		*/
 		cudaCheckErrors("memcpy hdist dH -> hH");
 	}
 	#pragma omp barrier
 	/* threads tid > 0 copy with p2p access, from GPU of tid0 */ 
-	if( tid != 0 ){
+	if( tid > 0 ){
 		/* these lines copy the generated distribution to the other GPUs */
 		//printf("copying dH from GPU%i to GPU%i\n", s->gpus[0].i, s->gpus[tid].i);
 		//checkCudaErrors(cudaMemcpyPeer(s->dH[tid], s->gpus[tid].i, s->dH[0], s->gpus[0].i, sizeof(int) * s->N));
 		//cudaCheckErrors("cudaMemcpyPeer");
-		checkCudaErrors(cudaMemcpy(s->dH[tid], s->hH, sizeof(int) * s->N, cudaMemcpyHostToDevice));		
+		checkCudaErrors(cudaMemcpy(s->dH[tid], s->hH, sizeof(int) * s->N, cudaMemcpyHostToDevice));	
+		//for(int i=0; i<s->N; ++i){
+		//	if(s->hH[i] != 1 && s->hH[i] != -1)
+		//printf("h[%i] = %i\n", i, s->hH[i]);
+		//}
+		//getchar();
 	}
 }
 

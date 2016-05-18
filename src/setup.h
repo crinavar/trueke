@@ -89,7 +89,7 @@ void adapt_init(setup_t *s, int argc, char **argv){
 
 	/* print parameters */
 	printparams(s);
-	printf("}:ok\n\n");
+	//printf("}:ok\n\n");
 	fflush(stdout);
 }
 
@@ -153,7 +153,7 @@ void adapt_malloc_arrays( setup_t *s ){
 			checkCudaErrors(cudaMalloc(&(s->apcgb[tid][k]), (s->N/4) * sizeof(uint64_t)));
 			checkCudaErrors(cudaStreamCreateWithFlags(&(s->arstream[tid][k]), cudaStreamNonBlocking));
             // offset and sequence approach
-			kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->arstream[tid][k] >>>(s->apcga[tid][k], s->apcgb[tid][k], s->N/4, s->seed + (unsigned long long)(s->N/4 * (s->R/s->ngpus*tid + k)), (s->R/s->ngpus*tid + k));
+			//kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->arstream[tid][k] >>>(s->apcga[tid][k], s->apcgb[tid][k], s->N/4, s->seed + (unsigned long long)(s->N/4 * (s->R/s->ngpus*tid + k)), (s->R/s->ngpus*tid + k));
             // skip ahead approach
 			//kernel_gpupcg_setup_offset<<<s->prng_grid, s->prng_block, 0, s->arstream[tid][k] >>>(s->apcga[tid][k], s->apcgb[tid][k], s->N/4, s->seed, (unsigned long long)((s->ms * s->pts + s->ds)*4*s->realizations), (s->L^3)/4 * (s->R/s->ngpus * tid + k) );
 			cudaCheckErrors("kernel: prng reset");
@@ -215,7 +215,7 @@ void init(setup_t *s, int argc, char **argv){
     //gpu_pcg32_srandom_r(&s->hpcgs, &s->hpcgi, s->seed, 1);
     
     // get another seed from master seeder
-    s->seed = gpu_pcg32_random_r(&s->hpcgs, &s->hpcgi);
+    //s->seed = gpu_pcg32_random_r(&s->hpcgs, &s->hpcgi);
 
 	/* build the space of computation for the lattices */
 	s->mcblock = dim3(BX, BY/2, BZ);
@@ -231,32 +231,12 @@ void init(setup_t *s, int argc, char **argv){
 	malloc_arrays(s);
 
 	/* reset table of obersvables per realization */
-	reset_realization_statistics(s, s->R);
 
 
 #ifdef MEASURE
-	//  (1) log(n),  (2) sqrt(n) or (3) n/2   where 'n' is the number of ptsteps
-	//int mzone = (ptsteps - (int)log2f((float)ptsteps));
-	//s->mzone = (s->pts - (int)sqrtf((float)s->pts));
-	//s->mzone = (int)sqrtf((float)s->pts);;
-	//s->mzone = (int) (log((double)s->L) * sqrt((double)s->pts));
-	//s->mzone = (int) (  (log(s->pts) / sqrt(s->pts)) * (double)s->pts);
-	//s->mzone = (int) (( 1.0 - (2.0 / log( sqrt(s->pts) )) ) * (double)s->pts);
-	//printf("%i zone \n", (int) (( 1.0 - (2.0 / log( sqrt(s->pts) )) ) * (double)s->pts));
-	//printf("%i zone \n", (int) ( (1.0 / log( sqrt(s->pts) ) ) * (double)s->pts));
-	//s->mzone = (int) (( (2.0 / log( sqrt(s->pts) )) ) * (double)s->pts);
-	//s->mzone = 0;
-	//s->mzone = 1000;
-	//int mzone = s->pts/2;
-
-	//printf("ignore the first %i steps of %i\n", s->mzone, s->pts);
+	reset_realization_statistics(s, s->R);
 #endif
 
-	/* print parameters */
-	//printparams(s);
-    //printarray<float>(s->T, s->R, "T");
-    //printarray<float>(s->E, s->R, "E");
-	//printf("}:ok\n\n"); fflush(stdout);
 }
 
 /* malloc arrays */

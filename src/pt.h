@@ -48,8 +48,16 @@ void pt(setup_t *s, int tid, int a, int b){
 		/* parallel tempering */
 		for(int p = 0; p < s->pts; ++p){
 			/* pt metropolis phase */
+			//if(tid == 0)
+			//	printf("antes de metropolis\n");
+			//ptenergies(s, tid, a, b);
+			//#pragma omp barrier
+			//if(tid == 0){
+			//	printarray<float>(s->exE, s->R, "exE");
+			//}
+			//#pragma omp barrier
 			metropolis(s, tid, a, b, s->ms);
-
+			//#pragma omp barrier
 			/* compute energies for exchange */
 			ptenergies(s, tid, a, b);
 
@@ -155,24 +163,23 @@ int exchange(setup_t *s, int tid, int a, int b, int p){
 void ptenergies(setup_t *s, int tid, int a, int b){
 	/* quick reset of the device reduction variables */
 	kernel_reset<float><<< (b-a + BLOCKSIZE1D - 1)/BLOCKSIZE1D, BLOCKSIZE1D, 0, s->rstream[a] >>> (s->dE[tid], b-a, 0.0f);
-	cudaDeviceSynchronize();
+	cudaDeviceSynchronize();	cudaCheckErrors("kernel_reset dE");
 	/* compute one energy reduction for each replica */
 	for(int k = a; k < b; ++k){
 		/* launch reduction kernel for k-th replica */
 		//s->E[k] = 0.0f;
 		redenergy(s, tid, a, b, k);
 		//cudaMemcpy(s->hlat[k], s->dlat[k], sizeof(int)*s->N, cudaMemcpyDeviceToHost);
-		//double cpuE 	= (double)compute_E(s->hlat[k], s->hH, s->h, s->L);
-		//s->E[k] = (float)cpuE;
-		//printf("        cpu E[%i] = %f\n", k, cpuE);
+		//cudaDeviceSynchronize();
+		//double cpuval 	= (double)cpuE(s->hlat[k], s->hH, s->h, s->L, s->L, s->L);
+		//double mval 	= (double)cpuM(s->hlat[k], s->L, s->L, s->L);
+		//s->E[k] = (float)cpuval;
+		//printf("tid=%i        cpu E[%i] = %f\n", tid, k, s->E[k]); fflush(stdout);
+		//printf("tid=%i        cpu M[%i] = %f\n", tid, k, mval); fflush(stdout);
 	}
 	cudaDeviceSynchronize();	cudaCheckErrors("kernel_redenergy");
 	cudaMemcpy(s->exE + a, s->dE[tid], (b-a)*sizeof(float), cudaMemcpyDeviceToHost);
     //printf("\ntid=%i          a  b    %i  %i\n", tid, a, b); fflush(stdout);
-    //#pragma omp barrier
-	//if(tid == 0){
-    //    printarray<float>(s->exE, s->R, "exE");
-    //}
 	//printf("a = %i    b = %i\n", a, b);
 	//for(int k = a; k < b; ++k){
 	//	printf("compute E[%i] = %f\n", k, s->E[k]);

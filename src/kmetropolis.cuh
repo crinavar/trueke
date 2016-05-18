@@ -87,6 +87,7 @@ kernel_metropolis(const int N, const int L, site_t *s, const int *H, const float
 	// get the h1,h2 values for y1 y2.
 	int h1 = H[C(x, y1, z, L)];
 	int h2 = H[C(x, y2, z, L)];
+	//printf("thread %i   h1=%i   h2=%i\n", tid, h1, h2);
 
 	// ------------------------------------------------
 	// halo
