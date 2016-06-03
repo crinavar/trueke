@@ -180,8 +180,8 @@ void reset_gpudata(setup_t *s, int tid, int a, int b){
     #pragma omp barrier
     if(tid == 0){
         // choose a new seed from the sequential PRNG
-        //s->seed = gpu_pcg32_random_r(&s->hpcgs, &s->hpcgi);
-        //printf("[%lu]\n", s->seed);
+        s->seed = gpu_pcg32_random_r(&s->hpcgs, &s->hpcgi);
+        printf("[%lu]\n", s->seed);
     }
     #pragma omp barrier
 	//printf("tid=%i     a=%i    b=%i\n", tid, a, b); fflush(stdout);
@@ -196,7 +196,7 @@ void reset_gpudata(setup_t *s, int tid, int a, int b){
 
 		/* doing a per-realizaton reset only works if seed is different each time */
         // LATEST
-        //kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->pcga[k], s->pcgb[k], s->N/4, s->seed + s->N/4 * k, k);
+        kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->pcga[k], s->pcgb[k], s->N/4, s->seed + s->N/4 * k, k);
 		cudaCheckErrors("kernel: prng reset");
 	}
     #pragma omp barrier
@@ -219,8 +219,8 @@ void adapt_reset_gpudata(setup_t *s, int tid){
     #pragma omp barrier
     if(tid == 0){
         // choose a new seed from the sequential PRNG
-        //s->seed = gpu_pcg32_random_r(&s->hpcgs, &s->hpcgi);
-        //printf("[%lu]\n", s->seed);
+        s->seed = gpu_pcg32_random_r(&s->hpcgs, &s->hpcgi);
+        printf("[%lu]\n", s->seed);
     }
     #pragma omp barrier
 	for(int k = 0; k < s->gpur[tid]; ++k){
@@ -240,7 +240,7 @@ void adapt_reset_gpudata(setup_t *s, int tid){
 		//printf("tid=%i   N=%i   N/4 = %i  R = %i  seed = %lu   k = %lu \n", tid, s->N, s->N/4, s->R, s->seed + (unsigned long long)(s->N/4 * (s->rpool[tid]*tid + k)), (s->rpool[tid]*tid + k));
 		//printf("tid=%i   N=%i   N/4 = %i  R = %i  seed = %lu   k = %lu \n", tid, s->N, s->N/4, s->R, s->seed + (unsigned long long)(s->N/4 * adapt_globalk(s, tid, k)), adapt_globalk(s, tid, k));
         // LATEST
-		//kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->arstream[tid][k] >>>(s->apcga[tid][k], s->apcgb[tid][k], s->N/4, s->seed + (unsigned long long)(s->N/4 * adapt_globalk(s, tid, k)), adapt_globalk(s, tid, k));
+		kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->arstream[tid][k] >>>(s->apcga[tid][k], s->apcgb[tid][k], s->N/4, s->seed + (unsigned long long)(s->N/4 * adapt_globalk(s, tid, k)), adapt_globalk(s, tid, k));
 		cudaCheckErrors("kernel: prng reset");
 	}
     #pragma omp barrier
