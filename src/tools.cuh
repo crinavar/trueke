@@ -203,6 +203,15 @@ void reset_gpudata(setup_t *s, int tid, int a, int b){
 	cudaCheckErrors("kernel realization resets");
 }
 
+int adapt_globalk(setup_t *s, int tid, int k){
+	int acc = 0;
+	for(int i=0; i<tid; ++i){
+		acc += s->gpur[i];
+	}
+	return k + acc;
+}
+
+
 /* reset gpu data structures */
 void adapt_reset_gpudata(setup_t *s, int tid){
     //printf("adapt_reset\n");
@@ -227,7 +236,9 @@ void adapt_reset_gpudata(setup_t *s, int tid){
 		//cudaCheckErrors("kernel: reset spins random");
 		/* doing a per-realizaton reset only works if seed is different each time */
 		//kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->arstream[tid][k] >>>(s->apcga[tid][k], s->apcgb[tid][k], s->N/4, s->seed , (unsigned long long)((s->R/s->ngpus)*tid + k));
-		kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->arstream[tid][k] >>>(s->apcga[tid][k], s->apcgb[tid][k], s->N/4, s->seed + s->N/4 *k, k);
+		//printf("tid=%i   N=%i   N/4 = %i  R = %i  seed = %lu   k = %lu \n", tid, s->N, s->N/4, s->R, s->seed + (unsigned long long)(s->N/4 * (s->rpool[tid]*tid + k)), (s->rpool[tid]*tid + k));
+		//printf("tid=%i   N=%i   N/4 = %i  R = %i  seed = %lu   k = %lu \n", tid, s->N, s->N/4, s->R, s->seed + (unsigned long long)(s->N/4 * adapt_globalk(s, tid, k)), adapt_globalk(s, tid, k));
+		kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->arstream[tid][k] >>>(s->apcga[tid][k], s->apcgb[tid][k], s->N/4, s->seed + (unsigned long long)(s->N/4 * adapt_globalk(s, tid, k)), adapt_globalk(s, tid, k));
 		cudaCheckErrors("kernel: prng reset");
 	}
     #pragma omp barrier
