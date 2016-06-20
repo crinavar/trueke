@@ -180,8 +180,8 @@ void reset_gpudata(setup_t *s, int tid, int a, int b){
     #pragma omp barrier
     if(tid == 0){
         // choose a new seed from the sequential PRNG
-        s->seed = gpu_pcg32_random_r(&s->hpcgs, &s->hpcgi);
-        printf("[%lu]\n", s->seed);
+        //s->seed = gpu_pcg32_random_r(&s->hpcgs, &s->hpcgi);
+        //printf("[%lu]\n", s->seed);
     }
     #pragma omp barrier
 	//printf("tid=%i     a=%i    b=%i\n", tid, a, b); fflush(stdout);
@@ -195,7 +195,7 @@ void reset_gpudata(setup_t *s, int tid, int a, int b){
 		//cudaCheckErrors("kernel: reset spins random");
 
 		/* doing a per-realizaton reset only works if seed is different each time */
-        kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->pcga[k], s->pcgb[k], s->N/4, s->seed + s->N/4 * k, k);
+        //kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->pcga[k], s->pcgb[k], s->N/4, s->seed + s->N/4 * k, k);
 		cudaCheckErrors("kernel: prng reset");
 	}
     #pragma omp barrier
@@ -527,6 +527,10 @@ void accum_mcmc_statistics( setup_t *s, int tid, int a, int b){
 		s->obstable[q].mdata.M		+= M;
 		s->obstable[q].mdata.sqM 	+= M*M;
 		s->obstable[q].mdata.quadM	+= M*M*M*M;
+		//double qm1 = M*M*M*M;
+        //double qm2 = quad(M);
+        //printf(" qm1 = %.30f               qm2 = %.30f\n", qm1, qm2);
+        //getchar();
 		s->obstable[q].mdata.F		+= F;
 	}
     #pragma omp barrier
