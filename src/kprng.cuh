@@ -25,6 +25,47 @@
 #ifndef _KERNEL_PRNG_SETUP_
 #define _KERNEL_PRNG_SETUP_
 
+#include <stdio.h>
+
+// Murmur hash 64-bit
+__device__ uint64_t mmhash64( const void * key, int len, unsigned int seed ){
+	const uint64_t m = 0xc6a4a7935bd1e995;
+	const int r = 47;
+
+	uint64_t h = seed ^ (len * m);
+
+	const uint64_t * data = (const uint64_t *)key;
+	const uint64_t * end = data + (len/8);
+
+	while(data != end){
+		uint64_t k = *data++;
+
+		k *= m; 
+		k ^= k >> r; 
+		k *= m; 
+
+		h ^= k;
+		h *= m; 
+	}
+	const unsigned char * data2 = (const unsigned char*)data;
+	switch(len & 7)
+	{
+		case 7: h ^= uint64_t(data2[6]) << 48;
+		case 6: h ^= uint64_t(data2[5]) << 40;
+		case 5: h ^= uint64_t(data2[4]) << 32;
+		case 4: h ^= uint64_t(data2[3]) << 24;
+		case 3: h ^= uint64_t(data2[2]) << 16;
+		case 2: h ^= uint64_t(data2[1]) << 8;
+		case 1: h ^= uint64_t(data2[0]);
+		h *= m;
+	};
+
+	h ^= h >> r;
+	h *= m;
+	h ^= h >> r;
+	return h;
+} 
+
 __global__ void kernel_prng_setup(curandState *state, int N, unsigned long long seed, unsigned long long seq){
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	/* Each thread gets same seed, a different sequence number, no offset */
@@ -37,11 +78,15 @@ __global__ void kernel_prng_setup(curandState *state, int N, unsigned long long 
 	}
 }
 
-__global__ void kernel_gpupcg_setup(uint64_t *state, uint64_t *inc, int N, int seed, unsigned long long seq){
+__global__ void kernel_gpupcg_setup(uint64_t *state, uint64_t *inc, int N, unsigned long long seed, unsigned long long seq){
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	if( x < N ){
         // exclusive seeds, per replica sequences 
-        gpu_pcg32_srandom_r(&state[x], &inc[x], x + seed, seq);
+		unsigned long long tseed = x + seed;
+		unsigned long long hseed = mmhash64(&tseed, sizeof(unsigned long long), 17);
+		//unsigned long long hseq = mmhash64(&seq, sizeof(unsigned long long), 47);
+		unsigned long long hseq = seq;
+        gpu_pcg32_srandom_r(&state[x], &inc[x], hseed, hseq);
 
         // exclusive seeds common seq
         //gpu_pcg32_srandom_r(&state[x], &inc[x], x + seed + seq, 1);
@@ -51,24 +96,6 @@ __global__ void kernel_gpupcg_setup(uint64_t *state, uint64_t *inc, int N, int s
 
         // one unique sequence for each thread in the multi-GPU system
         //gpu_pcg32_srandom_r(&(state[x]), &(inc[x]), seed, seq + x);
-
-	}
-}
-__global__ void kernel_gpupcg_setup_offset(uint64_t *state, uint64_t *inc, int N, int seed, unsigned long long seq, unsigned long long offset){
-	int x = blockIdx.x * blockDim.x + threadIdx.x;
-	if( x < N ){
-        // exclusive seeds common seq
-        //gpu_pcg32_srandom_r(&state[x], &inc[x], x + seed + seq, 1);
-
-        // vary seeds accross lattice positions
-        //gpu_pcg32_srandom_r(&(state[x]), &(inc[x]), x + seed, seq);
-
-        // one unique sequence for each thread in the multi-GPU system
-        //gpu_pcg32_srandom_r(&(state[x]), &(inc[x]), seed, seq + x);
-
-        // skip-ahead approach
-        gpu_pcg32_srandom_r(&state[x], &inc[x], seed, 1);
-        pcg_skip_ahead(&state[x], &inc[x], seq*(offset+x));
 
 	}
 }
