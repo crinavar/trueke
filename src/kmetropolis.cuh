@@ -238,6 +238,7 @@ __global__ void kernel_reset_random_gpupcg(int *s, int N, uint64_t *state, uint6
 
 	/* save the state back to global memory */
 	state[x] = lstate;
+	inc[x] = linc;
 }
 
 template<typename T>

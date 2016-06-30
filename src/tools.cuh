@@ -190,10 +190,6 @@ void reset_gpudata(setup_t *s, int tid, int a, int b){
 		kernel_reset<int><<< s->lgrid, s->lblock, 0, s->rstream[k] >>>(s->dlat[k], s->N, 1);
 		cudaCheckErrors("kernel: reset spins up");
 
-		/* random spins */
-		//kernel_reset_random<<< s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->dlat[k], s->N, s->dstates[k]);
-		//cudaCheckErrors("kernel: reset spins random");
-
 		/* doing a per-realizaton reset only works if seed is different each time */
         // LATEST
         kernel_gpupcg_setup<<<s->prng_grid, s->prng_block, 0, s->rstream[k] >>>(s->pcga[k], s->pcgb[k], s->N/4, s->seed + s->N/4 * k, k);
@@ -540,6 +536,10 @@ void accum_mcmc_statistics( setup_t *s, int tid, int a, int b){
 		s->obstable[q].mdata.M		+= M;
 		s->obstable[q].mdata.sqM 	+= M*M;
 		s->obstable[q].mdata.quadM	+= M*M*M*M;
+		//double qm1 = M*M*M*M;
+        //double qm2 = quad(M);
+        //printf(" qm1 = %.30f               qm2 = %.30f\n", qm1, qm2);
+        //getchar();
 		s->obstable[q].mdata.F		+= F;
 	}
     #pragma omp barrier
