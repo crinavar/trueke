@@ -84,8 +84,8 @@ __global__ void kernel_gpupcg_setup(uint64_t *state, uint64_t *inc, int N, unsig
         // exclusive seeds, per replica sequences 
 		unsigned long long tseed = x + seed;
 		unsigned long long hseed = mmhash64(&tseed, sizeof(unsigned long long), 17);
-		//unsigned long long hseq = mmhash64(&seq, sizeof(unsigned long long), 47);
-		unsigned long long hseq = seq;
+		unsigned long long hseq = mmhash64(&seq, sizeof(unsigned long long), 47);
+		//unsigned long long hseq = seq;
         gpu_pcg32_srandom_r(&state[x], &inc[x], hseed, hseq);
 
         // exclusive seeds common seq
