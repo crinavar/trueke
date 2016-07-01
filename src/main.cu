@@ -142,7 +142,7 @@ int main(int argc, char **argv){
 	/* total time */
 	sdkStopTimer(&(s.gtimer));
     stime = sdkGetTimerValue(&(s.gtimer))/1000.0f;
-	printf("ok: total time: %.4f h(adapt) + %.4fh (sim) = %.4fh\n", atime/3600.0, stime/3600.0, (atime + stime)/3600.0);
+	printf("ok: total time = adaptive + simulation = %.2fh + %.2fh = %.2fh\n", atime/3600.0, stime/3600.0, (atime + stime)/3600.0);
 
 	/* free memory */
 	freemem(&s);
