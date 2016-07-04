@@ -133,8 +133,8 @@ struct setup{
 	/* pt and simulation parameters */
 	int pts, ds, ms, fs, cs, period;
 	int blocks, realizations;
-	unsigned long long seed;
-    int R, Ra;
+	unsigned long long seed, oseed;
+    int R, Ra, Ro;
 	int ngpus, fam;
 
 	/* space of computation dimensions */	

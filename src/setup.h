@@ -183,6 +183,8 @@ void adjustparams(setup_t *s){
     s->N = (s->L)*(s->L)*(s->L);
     /* shared memory steps */
     s->cs = BLOCK_STEPS;
+    /* keep original parameter R */
+    s->Ro = s->R;
     /* adjust R to a multiple of ngpus; R' = ceil(R/ngpus) *ngpus */
     s->R = (int)ceil((float)s->R/(float)s->ngpus) * s->ngpus;
     /* compute Ra to be the final size Ra = R + TL */
@@ -196,6 +198,9 @@ void adjustparams(setup_t *s){
     }
     /* last adaptation insert */
     s->fam = 0;
+
+    /* record original seed */
+    s->oseed = s->seed;
 
     for(int i=0; i < s->ngpus; ++i){
         /* active replicas per gpu */

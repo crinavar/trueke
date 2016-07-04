@@ -279,6 +279,20 @@ void print_realization_statistics( setup_t *s ){
 }
 #endif
 
+void write_parameters(setup_t* s){
+	FILE *fw;
+    fw = fopen(string(string(s->obsfolder) + "/parameters.txt").c_str(), "w");
+    if(!fw){
+            fprintf(stderr, "error opening file %s for writing\n", "parameters.txt");
+            exit(1);
+    }
+    fprintf(fw, "launch parameters:\n");
+    fprintf(fw, "bin/trueke -l %i %i     -t %f %f      -a %i %i %i %i    -h %f    -s %i %i %i %i %i %i    -br %i %i    -z %lu     -g 3\n", s->L, s->Ro,
+        s->TR, s->dT, s->atrials, s->ains, s->apts, s->ams, s->h, s->pts,
+        s->mzone, s->ds, s->ms, s->fs, s->period, s->blocks, s->realizations,
+        s->oseed, s->ngpus);
+    fclose(fw);
+}
 /* write the realization statistics */
 #ifdef MEASURE
 void write_realization_statistics( setup_t* s){
@@ -918,6 +932,7 @@ void physical_results(setup_t *s){
 	write_susceptibility(s);
 	/* write average measures */
 	write_realization_statistics(s);
+    write_parameters(s);
 }
 #endif
 
