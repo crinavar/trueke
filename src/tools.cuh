@@ -287,7 +287,7 @@ void write_parameters(setup_t* s){
             exit(1);
     }
     fprintf(fw, "launch parameters:\n");
-    fprintf(fw, "bin/trueke -l %i %i     -t %f %f      -a %i %i %i %i    -h %f
+    fprintf(fw, "bin/trueke -l %i %i     -t %f %f      -a %i %i %i %i    -h %f \
             -s %i %i %i %i %i %i    -br %i %i    -z %lu     -g %i\n", s->L, s->Ro,
         s->TR, s->dT, s->atrials, s->ains, s->apts, s->ams, s->h, s->pts,
         s->mzone, s->ds, s->ms, s->fs, s->period, s->blocks, s->realizations,
