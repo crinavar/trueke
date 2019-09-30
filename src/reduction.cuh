@@ -27,7 +27,7 @@
 template < typename T >
 __inline__ __device__ float warp_reduce(T val){
 	for (int offset = WARPSIZE >> 1; offset > 0; offset >>= 1)
-		val += __shfl_down(val, offset);
+		val += __shfl_down_sync(0xFFFFFFFF, val, offset);
 	return val;
 }
 
@@ -94,9 +94,9 @@ __global__ void kernel_redenergy(int *s, int L, T *out, int *H, float h){
 template < typename T >
 __inline__ __device__ float3 warp_reduce3(T val){
 	for (int offset = WARPSIZE >> 1; offset > 0; offset >>= 1){
-		val.x += __shfl_down(val.x, offset);
-		val.y += __shfl_down(val.y, offset);
-		val.z += __shfl_down(val.z, offset);
+		val.x += __shfl_down_sync(0xFFFFFFFF, val.x, offset);
+		val.y += __shfl_down_sync(0xFFFFFFFF, val.y, offset);
+		val.z += __shfl_down_sync(0xFFFFFFFF, val.z, offset);
 	};
 	return val;
 }
