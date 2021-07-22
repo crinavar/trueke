@@ -155,7 +155,7 @@ void threadset(setup_t *s, int *tid, int *nt, int *r){
 	/* 'r' replicas for each GPU */
 	*r = (s->R)/(*nt);
 	/* set the device */
-	//printf("tid = %i   ngpus = %i\n   gpus[%i].i = %i\n", *tid, s->ngpus, s->gpus[*tid].i);
+	//printf("tid = %i   ngpus = %i   gpus[%i].i = %i\n", *tid, s->ngpus, s->gpus[*tid].i);
 	checkCudaErrors(cudaSetDevice( s->gpus[*tid].i ));
 }
 
@@ -170,7 +170,7 @@ void adapt_threadset(setup_t *s, int *tid, int *nt, int *r){
     /* get the number of replicas for the actual GPU */
     *r = s->gpur[*tid];
 	/* set the device */
-	//printf("tid = %i   ngpus = %i\n   gpus[%i].i = %i\n", *tid, s->ngpus, s->gpus[*tid].i);
+	//printf("\ttid = %i   ngpus = %i   gpus[%i].i = %i\n", *tid, s->ngpus, s->gpus[*tid].i);
 	checkCudaErrors(cudaSetDevice( s->gpus[*tid].i ));
 }
 

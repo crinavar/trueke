@@ -2,8 +2,8 @@
 # Makefile                                                   #
 #                                                            #
 # Author      : Cristobal Navarro <crinavar@dcc.uchile.cl>   #
-# Version     : 1.0                                          #
-# Date        : September 2015                               #
+# Version     : 1.1                                          #
+# Date        : April 2021                                   #
 # Description : Compiles the program                         #
 ##############################################################
 
@@ -15,19 +15,20 @@ DEP		:= ./dep
 EXEC	:= trueke
 CXXFLAGS   := -O3 -g -fopenmp
 
-# paths
-CUDA_ROOT ?= /opt/cuda
+# [CAN MODIFY] set these paths according to your system
+CUDA_ROOT ?= /usr/local/cuda
 CUDA_INSTALL_PATH ?= $(CUDA_ROOT)
-CUDA_SDK_PATH ?= $(CUDA_ROOT)/samples
+CUDA_SAMPLES_PATH ?= $(CUDA_ROOT)/samples
+CUDA_COMMON_PATH ?= $(CUDA_SAMPLES_PATH)/common
 
-# compiler, include and lib parameters
+# [CAN MODIFY] compiler, include and lib parameters
 NVCC ?= $(CUDA_INSTALL_PATH)/bin/nvcc
-INCD = -I"$(CUDA_SDK_PATH)/common/inc" -I"$(CUDA_INSTALL_PATH)/include" -I"./" -I"/usr/include/nvidia/gdk/"
-LIBS = -lcuda -L"$(CUDA_INSTALL_PATH)/lib64" -lcudart -L"$(CUDA_SDK_PATH)/common/lib" -lpthread -lnvidia-ml -lgomp
+INCD = -I"$(CUDA_COMMON_PATH)/inc" -I"$(CUDA_INSTALL_PATH)/include"
+LIBS = -lcuda -L"$(CUDA_INSTALL_PATH)/lib64" -lcudart -L"$(CUDA_COMMON_PATH)/lib" -lpthread -lnvidia-ml -lgomp
 
-# compiler flags
-SPECIAL_FLAGS = --compiler-options -fno-strict-aliasing,-O3,-march=native,-msse4,-mfpmath=sse,-funroll-loops,-finline-functions -Xcompiler -fopenmp -Xcompiler
-NVCCFLAGS	:= -m64 -arch sm_70 -lineinfo -O3 -Xptxas -dlcm=cg ${SPECIAL_FLAGS} -D_FORCE_INLINES
+# [CAN MODIFY] compiler flags, update them if they look too old for your hardware
+SPECIAL_FLAGS = --compiler-options -fno-strict-aliasing,-O3,-march=native,-march=znver2,-mavx2,-funroll-loops,-finline-functions -Xcompiler -fopenmp -Xcompiler
+NVCCFLAGS	:= -m64 -arch sm_80 -lineinfo -O3 -Xptxas -dlcm=cg ${SPECIAL_FLAGS} -D_FORCE_INLINES
 DEBUG_NVCCFLAGS := --ptxas-options=-v -G -g-ccbin /usr/bin/g++ -Xptxas -dlcm=cg
 
 # source files
