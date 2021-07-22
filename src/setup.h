@@ -385,24 +385,20 @@ void pickgpus( setup_t *s ){
 	/* get the information of each GPU */
 	printf("\tListing devices:\n");
 	for(i = 0; i < devcount; i++){
-        unsigned int index;
 		nvmlDevice_t dev;
 		char name[64];
-        char uuid[128];
 		//nvmlComputeMode_t compute_mode;
 		nvmlUtilization_t util;
 		r = nvmlDeviceGetHandleByIndex(i, &dev); 
 		nvml_check(r, "nvmlDeviceGetHandleByIndex");
 		r = nvmlDeviceGetName(dev, name, sizeof(name)/sizeof(name[0])); 
 		nvml_check(r, "nvmlDeviceGetName");
-        r = nvmlDeviceGetIndex(dev, &index);
-        r = nvmlDeviceGetUUID(dev, uuid, 128);
-		printf("\t\tGPU%d %s, index=%i, UUID=%s", i, name, index, uuid);
+		printf("\t\tGPU%d. %s", i, name);
 		r = nvmlDeviceGetUtilizationRates(dev, &util); 
 		u = nvml_check(r, "nvmlDeviceGetUtilizationRates");
 		if(u){
 			printf("  -> util = %i%%\n", util.gpu);
-			gpus[i].i = index;
+			gpus[i].i = i;
 			gpus[i].u = util.gpu;
 			gpus[i].m = util.memory;
 		}
